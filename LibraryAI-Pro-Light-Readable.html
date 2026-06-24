@@ -1,0 +1,1977 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>LibraryAI Pro</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#1E293B;--ink2:#334155;--ink3:#475569;
+  --cream:#F8FAFC;--cream2:#EEF2FF;--cream3:#DBEAFE;
+  --gold:#c9893a;--gold-l:#f5ddb0;--gold-d:#8a5e1f;
+  --teal:#1a6b5a;--teal-l:#cff0e8;--teal-d:#0d3f34;
+  --rust:#b84020;--rust-l:#fbd5c8;
+  --green:#2a6b2a;--green-l:#d0f0d0;
+  --blue:#1a4a8e;--blue-l:#d5e4f8;
+  --purple:#4a2d8e;--purple-l:#e0d5f8;
+  --border:rgba(15,14,26,.1);
+  --shadow:0 4px 24px rgba(15,14,26,.07);
+  --radius:12px;--radius-lg:18px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--ink);line-height:1.65}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-thumb{background:var(--ink3);border-radius:4px}
+
+/* ── GATE ── */
+#gate{position:fixed;inset:0;z-index:9999;background:linear-gradient(135deg,#EFF6FF 0%,#DBEAFE 50%,#F8FAFC 100%);display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+#gate.off{display:none}
+.gate-inner{width:100%;max-width:900px;padding:20px 0}
+.gate-logo{text-align:center;margin-bottom:2rem}
+.gate-logo h1{font-family:'Playfair Display',serif;font-size:3rem;font-weight:700;color:#1E293B}
+.gate-logo p{color:rgba(250,248,243,.4);margin-top:.35rem}
+.gate-cards{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem}
+.gc{background:#FFFFFF;border:1px solid #E2E8F0;box-shadow:0 10px 30px rgba(0,0,0,.08);border-radius:20px;padding:2rem;cursor:pointer;transition:all .2s;text-align:center}
+.gc:hover{background:rgba(255,255,255,.09);border-color:rgba(255,255,255,.2);transform:translateY(-3px)}
+.gc-icon{font-size:2.8rem;margin-bottom:1rem}
+.gc h2{font-family:'Playfair Display',serif;font-size:1.4rem;color:#1E293B;margin-bottom:.5rem}
+.gc p{font-size:.84rem;color:#64748B;line-height:1.6}
+.gc-btn{margin-top:1.2rem;width:100%;padding:11px;border-radius:9px;border:none;font-family:'DM Sans',sans-serif;font-size:.92rem;font-weight:500;cursor:pointer}
+.gc-u{background:var(--gold);color:#fff}
+.gc-a{background:rgba(255,255,255,.1);color:#1E293B;border:1px solid rgba(255,255,255,.2)!important}
+.gate-form{max-width:420px;margin:0 auto}
+.gate-form h2{font-family:'Playfair Display',serif;color:#1E293B;font-size:1.5rem;text-align:center;margin-bottom:.3rem}
+.gate-form .sub{color:#64748B;font-size:.84rem;text-align:center;margin-bottom:1.75rem}
+.gf{margin-bottom:13px}
+.gf label{display:block;font-size:.76rem;color:#475569;margin-bottom:4px}
+.gf input,.gf select{width:100%;padding:10px 13px;border-radius:9px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:#1E293B;font-family:'DM Sans',sans-serif;font-size:.9rem}
+.gf input:focus,.gf select:focus{outline:none;border-color:var(--gold)}
+.gf input::placeholder{color:rgba(255,255,255,.2)}
+.gf select option{background:var(--ink2)}
+.g-sub{width:100%;padding:12px;border-radius:9px;border:none;font-family:'DM Sans',sans-serif;font-size:.95rem;font-weight:500;cursor:pointer;margin-top:.4rem;transition:all .15s}
+.g-sub-u{background:var(--gold);color:#fff}.g-sub-a{background:var(--gold);color:#fff}
+.g-back{background:none;border:none;color:#64748B;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;width:100%;text-align:center;margin-top:.65rem}
+.g-err{color:#f8a;font-size:.8rem;text-align:center;margin-top:.45rem;display:none}
+.g-hint{color:rgba(255,255,255,.18);font-size:.7rem;text-align:center;margin-top:.6rem}
+.g-tabs{display:flex;gap:4px;background:rgba(255,255,255,.07);border-radius:10px;padding:4px;margin-bottom:1.5rem}
+.g-tab{flex:1;padding:8px;border-radius:7px;border:none;background:transparent;color:#475569;font-family:'DM Sans',sans-serif;font-size:.84rem;cursor:pointer;transition:all .15s}
+.g-tab.on{background:rgba(255,255,255,.12);color:#1E293B;font-weight:500}
+
+/* ── LAYOUT ── */
+#app{display:none;min-height:100vh}
+#app.on{display:flex}
+.sidebar{width:240px;min-height:100vh;position:fixed;top:0;left:0;z-index:200;display:flex;flex-direction:column;background:#2563EB}
+.sb-logo{padding:20px 18px 16px;border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:9px}
+.sb-logo-text{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;color:#1E293B}
+.sb-dot{width:27px;height:27px;border-radius:7px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:.85rem}
+.sb-rbadge{font-size:.6rem;padding:2px 7px;border-radius:6px;font-weight:600;margin-left:auto}
+.rb-s{background:rgba(26,107,90,.4);color:var(--teal-l)}
+.rb-a{background:rgba(184,64,32,.4);color:#f8b4a0}
+.sb-sec{padding:13px 14px 4px;font-size:.62rem;letter-spacing:.12em;text-transform:uppercase;color:#94A3B8}
+.sbi{display:flex;align-items:center;gap:9px;padding:9px 14px;margin:2px 7px;border-radius:8px;color:rgba(255,255,255,.48);font-size:.86rem;cursor:pointer;transition:all .15s}
+.sbi:hover{background:rgba(255,255,255,.07);color:rgba(255,255,255,.85)}
+.sbi.on{background:rgba(201,137,58,.18);color:var(--gold)}
+.sbi .ic{font-size:1rem;width:18px;text-align:center}
+.sb-badge{background:var(--rust);color:#fff;font-size:.6rem;padding:1px 6px;border-radius:10px;margin-left:auto}
+.sb-foot{margin-top:auto;padding:13px;border-top:1px solid rgba(255,255,255,.07);display:flex;align-items:center;gap:8px}
+.sb-av{width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0}
+.sb-ui{span{display:block;font-size:.8rem;color:#1E293B} small{font-size:.68rem;color:#64748B}}
+.sb-out{margin-left:auto;background:none;border:none;color:#64748B;cursor:pointer;font-size:.82rem}
+.sb-out:hover{color:var(--rust-l)}
+.main{margin-left:240px;flex:1}
+.topbar{position:sticky;top:0;z-index:100;background:rgba(250,248,243,.94);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;padding:0 22px;height:58px}
+.tb-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:600}
+.tb-qs{flex:1;max-width:320px;position:relative}
+.tb-qs input{width:100%;padding:7px 12px 7px 32px;border-radius:8px;border:1px solid var(--border);background:var(--cream2);font-family:'DM Sans',sans-serif;font-size:.84rem}
+.tb-qs input:focus{outline:none;border-color:var(--gold)}
+.tb-qs .si{position:absolute;left:10px;top:50%;transform:translateY(-50%);opacity:.35;font-size:.88rem}
+.tb-r{margin-left:auto;display:flex;gap:7px;align-items:center}
+.tb-nb{position:relative;cursor:pointer;font-size:1.1rem}
+.tb-dot{position:absolute;top:0;right:0;width:7px;height:7px;border-radius:50%;background:var(--rust);border:2px solid var(--cream)}
+.flash{background:var(--rust);color:#fff;border-radius:20px;font-size:.7rem;padding:3px 10px;font-weight:600;cursor:pointer}
+
+/* ── BTN ── */
+.btn{padding:7px 16px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:.83rem;font-weight:500;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;gap:5px}
+.btn-gold{background:var(--gold);color:#fff}.btn-gold:hover{background:var(--gold-d)}
+.btn-teal{background:var(--teal);color:#fff}.btn-teal:hover{background:var(--teal-d)}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--ink)}.btn-outline:hover{background:var(--cream2)}
+.btn-danger{background:var(--rust);color:#fff}.btn-danger:hover{opacity:.85}
+.btn-green{background:var(--green);color:#fff}.btn-green:hover{opacity:.85}
+.btn-purple{background:var(--purple);color:#fff}.btn-purple:hover{opacity:.85}
+.btn-sm{padding:5px 11px;font-size:.76rem}
+.btn-ol-light{background:transparent;border:1.5px solid rgba(255,255,255,.2);color:#1E293B}.btn-ol-light:hover{background:rgba(255,255,255,.08)}
+
+/* ── PAGES ── */
+.page{display:none;padding:24px}
+.page.on{display:block}
+
+/* ── CARDS ── */
+.card{background:#fff;border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.4rem;box-shadow:var(--shadow)}
+.sc{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1.1rem 1.2rem;display:flex;align-items:center;gap:.85rem;box-shadow:var(--shadow)}
+.si2{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.sn{font-family:'Playfair Display',serif;font-size:1.55rem;font-weight:700;line-height:1}
+.sl{font-size:.73rem;color:rgba(15,14,26,.43);margin-top:2px}
+.st{font-size:.7rem;margin-top:3px}
+.su{color:var(--teal)}.sd{color:var(--rust)}
+
+/* ── GRIDS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:1.2rem}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:1.1rem}
+.ga{display:grid;grid-template-columns:repeat(auto-fill,minmax(195px,1fr));gap:1rem}
+
+/* ── TABLE ── */
+.tw{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+thead tr{background:var(--cream2)}
+th{padding:9px 12px;font-size:.72rem;font-weight:500;text-transform:uppercase;letter-spacing:.07em;color:rgba(15,14,26,.42);text-align:left;white-space:nowrap}
+td{padding:10px 12px;font-size:.85rem;border-top:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:rgba(250,248,243,.6)}
+.bd{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.68rem;font-weight:500}
+.b-p{background:var(--gold-l);color:var(--gold-d)}
+.b-a{background:var(--green-l);color:var(--green)}
+.b-r{background:var(--rust-l);color:var(--rust)}
+.b-av{background:var(--green-l);color:var(--green)}
+.b-lo{background:var(--rust-l);color:var(--rust)}
+.b-ov{background:#fbd5c8;color:#9e2020}
+.b-re{background:var(--cream2);color:rgba(15,14,26,.4)}
+
+/* ── FORM ── */
+.fr{display:grid;gap:11px;margin-bottom:11px}
+.fr2{grid-template-columns:1fr 1fr}.fr3{grid-template-columns:1fr 1fr 1fr}
+label{display:block;font-size:.76rem;font-weight:500;color:rgba(15,14,26,.52);margin-bottom:3px}
+input[type=text],input[type=number],input[type=email],input[type=date],input[type=password],select,textarea{width:100%;padding:8px 11px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.87rem;color:var(--ink);background:var(--cream);transition:border .2s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--gold)}
+textarea{resize:vertical;min-height:65px}
+
+/* ── MODAL ── */
+.mov{display:none;position:fixed;inset:0;z-index:500;background:rgba(15,14,26,.5);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:20px}
+.mov.on{display:flex}
+.modal{background:#fff;border-radius:var(--radius-lg);padding:1.7rem;max-width:540px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 24px 80px rgba(15,14,26,.22)}
+.mh{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem}
+.mt{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700}
+.mc{background:none;border:none;font-size:1.4rem;cursor:pointer;color:rgba(15,14,26,.38)}
+
+/* ── TOAST ── */
+.notif{position:fixed;bottom:24px;right:24px;z-index:9998;background:#2563EB;color:#1E293B;padding:12px 20px;border-radius:10px;font-size:.86rem;transform:translateY(60px);opacity:0;transition:all .3s;pointer-events:none;display:flex;align-items:center;gap:8px;max-width:340px;box-shadow:0 8px 32px rgba(15,14,26,.3)}
+.notif.show{transform:translateY(0);opacity:1}
+.nt-s{background:var(--teal)}.nt-e{background:var(--rust)}.nt-i{background:var(--blue)}
+
+/* ── BOOK CARD ── */
+.bk{background:#fff;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;transition:transform .2s,box-shadow .2s}
+.bk:hover{transform:translateY(-3px);box-shadow:0 10px 32px rgba(15,14,26,.1)}
+.bc{height:105px;display:flex;align-items:center;justify-content:center;font-size:2.1rem;position:relative}
+.ap{position:absolute;top:7px;right:7px;font-size:.66rem;font-weight:600;padding:2px 7px;border-radius:10px}
+.ap-y{background:var(--green-l);color:var(--green)}.ap-n{background:var(--rust-l);color:var(--rust)}
+.bb{padding:.8rem}
+.bb h4{font-size:.87rem;font-weight:500;line-height:1.3;margin-bottom:2px}
+.bb .au{font-size:.72rem;color:rgba(15,14,26,.42)}
+.bm{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
+.ss{color:var(--gold);font-size:.72rem}
+.gt{font-size:.67rem;background:var(--cream2);color:rgba(15,14,26,.52);padding:2px 8px;border-radius:10px}
+
+/* ── HERO ── */
+.hero{background:linear-gradient(135deg,var(--ink) 0%,#2e2b45 100%);border-radius:20px;padding:2.5rem;color:#1E293B;margin-bottom:1.75rem;position:relative;overflow:hidden}
+.hero::before{content:'📚';position:absolute;right:2.5rem;top:50%;transform:translateY(-50%);font-size:6.5rem;opacity:.07}
+.ht{display:inline-block;background:rgba(201,137,58,.2);color:var(--gold-l);border:1px solid rgba(201,137,58,.3);border-radius:20px;padding:3px 12px;font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.8rem}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(1.6rem,3.5vw,2.5rem);font-weight:700;line-height:1.15;margin-bottom:.6rem}
+.hero h1 em{color:var(--gold);font-style:italic}
+.hero p{font-size:.93rem;opacity:.58;max-width:400px;margin-bottom:1.4rem}
+.hb{display:flex;gap:.6rem;flex-wrap:wrap}
+
+/* ── CHAT ── */
+.chat-wrap{background:var(--cream2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;height:400px}
+.chat-msgs{flex:1;overflow-y:auto;padding:.85rem;display:flex;flex-direction:column;gap:.65rem}
+.cbr{display:flex;align-items:flex-end;gap:7px}
+.cbr.usr{flex-direction:row-reverse}
+.cav{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700;flex-shrink:0}
+.cai{background:var(--teal-l);color:var(--teal-d)}.cu{background:var(--gold-l);color:var(--gold-d)}
+.cb{padding:8px 13px;border-radius:13px;font-size:.84rem;line-height:1.5;max-width:82%}
+.cb-ai{background:#fff;border-bottom-left-radius:3px}.cb-u{background:var(--gold);color:#fff;border-bottom-right-radius:3px}
+.cf{display:flex;gap:7px;padding:.65rem;background:#fff;border-top:1px solid var(--border)}
+.cf input{flex:1;padding:8px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.84rem}
+.cf input:focus{outline:none;border-color:var(--gold)}
+
+/* ── REQ CARD ── */
+.rqc{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:1rem 1.2rem;margin-bottom:.8rem;border-left:4px solid var(--gold)}
+.rqc.approved{border-left-color:var(--green)}.rqc.rejected{border-left-color:var(--rust)}
+.rqt{display:flex;align-items:flex-start;gap:10px}
+.rqi{width:40px;height:40px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+.rqa{display:flex;gap:6px;margin-top:.7rem;flex-wrap:wrap}
+
+/* ── MISC ── */
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem}
+.pt{font-family:'Playfair Display',serif;font-size:1.42rem;font-weight:700}
+.ps{font-size:.81rem;color:rgba(15,14,26,.43);margin-top:2px}
+.sg{margin-top:1.3rem}
+.tag{display:inline-block;padding:2px 9px;border-radius:20px;font-size:.68rem;background:var(--cream2);color:rgba(15,14,26,.52);border:1px solid var(--border);margin:2px}
+.chip{padding:4px 12px;border-radius:20px;border:1px solid var(--border);background:var(--cream2);font-size:.77rem;cursor:pointer;transition:all .15s;display:inline-block;margin:2px}
+.chip:hover{background:var(--gold-l);border-color:var(--gold);color:var(--gold-d)}
+.empty{text-align:center;padding:2.5rem;color:rgba(15,14,26,.33)}
+.empty .big{font-size:2.2rem;margin-bottom:.4rem}
+.sb-bar{display:flex;gap:.6rem;margin-bottom:1.3rem;flex-wrap:wrap}
+.sb-bar input,.sb-bar select{padding:8px 12px;border-radius:9px;border:1px solid var(--border);background:#fff;font-family:'DM Sans',sans-serif;font-size:.85rem}
+.sb-bar input{flex:1;min-width:160px}
+.sb-bar input:focus,.sb-bar select:focus{outline:none;border-color:var(--gold)}
+.drow{display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)}
+.dbg{flex:1;height:7px;background:var(--cream2);border-radius:4px;overflow:hidden}
+.dfill{height:100%;border-radius:4px}
+.tab-bar{display:flex;gap:3px;background:var(--cream2);border-radius:10px;padding:4px;margin-bottom:1.2rem;width:fit-content}
+.tab-btn{padding:6px 16px;border-radius:7px;border:none;background:transparent;font-family:'DM Sans',sans-serif;font-size:.82rem;cursor:pointer;color:rgba(15,14,26,.5);transition:all .15s}
+.tab-btn.on{background:#fff;color:var(--ink);font-weight:500;box-shadow:var(--shadow)}
+.fine-box{background:var(--rust-l);border:1px solid rgba(184,64,32,.2);border-radius:10px;padding:.85rem;margin:.75rem 0;text-align:center}
+.fine-box .fa{font-size:1.4rem;font-weight:700;color:var(--rust)}
+.fine-box small{font-size:.78rem;color:rgba(15,14,26,.5)}
+.due-warn{background:var(--gold-l);border:1px solid rgba(201,137,58,.3);border-radius:8px;padding:.65rem .85rem;font-size:.82rem;color:var(--gold-d);margin-top:.5rem}
+.member-detail-wrap{display:flex;gap:1rem;align-items:flex-start;flex-wrap:wrap;margin-bottom:1.2rem}
+.member-av-big{width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;flex-shrink:0}
+@media(max-width:700px){.gate-cards,.g2,.g3,.g4{grid-template-columns:1fr}.sidebar{transform:translateX(-100%)}.main{margin-left:0}}
+</style>
+</head>
+<body>
+<div class="notif" id="notif"></div>
+
+<!-- ══ GATE ══ -->
+<div id="gate">
+  <div class="gate-inner">
+
+    <!-- Role chooser -->
+    <div id="gc" class="gate-wrap">
+      <div class="gate-logo"><div style="font-size:3rem;margin-bottom:.5rem">📚</div><h1>LibraryAI Pro</h1><p>Production-grade Intelligent Library Management System</p></div>
+      <div class="gate-cards">
+        <div class="gc" onclick="showGate('student')">
+          <div class="gc-icon">👨‍🎓</div><h2>Student Portal</h2>
+          <p>Browse books, request loans, track returns, use AI search and renew books before due date</p>
+          <button class="gc-btn gc-u">Enter as Student →</button>
+        </div>
+        <div class="gc" style="border-color:rgba(201,137,58,.25)" onclick="showGate('admin')">
+          <div class="gc-icon">🔐</div><h2>Admin Panel</h2>
+          <p>Full library control — manage books, approve requests, track all members, loans and analytics</p>
+          <button class="gc-btn gc-a">Login as Admin →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Student -->
+    <div id="gf-student" style="display:none">
+      <div class="gate-form">
+        <div style="text-align:center;font-size:2rem;margin-bottom:.5rem">👨‍🎓</div>
+        <h2>Student Login / Register</h2>
+        <div class="sub" style="color:#64748B;font-size:.84rem;text-align:center;margin-bottom:1.5rem">Access your library account</div>
+        <div class="g-tabs">
+          <button class="g-tab on" onclick="switchTab('login')">Login</button>
+          <button class="g-tab" onclick="switchTab('register')">Register</button>
+        </div>
+        <!-- Login -->
+        <div id="s-login">
+          <div class="gf"><label>Member ID</label><input type="text" id="sl-id" placeholder="e.g. STU-001"/></div>
+          <div class="gf"><label>Password</label><input type="password" id="sl-pw" placeholder="Your password" onkeydown="if(event.key==='Enter')sLogin()"/></div>
+          <div class="g-err" id="sl-err">Invalid Member ID or password</div>
+          <button class="g-sub g-sub-u" onclick="sLogin()">Login →</button>
+          <div class="g-hint">Demo: STU-001 / library@2024</div>
+        </div>
+        <!-- Register -->
+        <div id="s-reg" style="display:none">
+          <div class="gf"><label>Full Name *</label><input type="text" id="sr-name" placeholder="Your full name"/></div>
+          <div class="gf"><label>Member ID *</label><input type="text" id="sr-id" placeholder="e.g. STU-009"/></div>
+          <div class="gf"><label>Email</label><input type="email" id="sr-email" placeholder="email@college.edu"/></div>
+          <div class="gf"><label>Phone</label><input type="text" id="sr-phone" placeholder="+91 98765..."/></div>
+          <div class="gf"><label>Department</label><select id="sr-dept"><option value="">Select</option><option>CSE</option><option>ECE</option><option>EEE</option><option>MECH</option><option>CIVIL</option><option>MBA</option></select></div>
+          <div class="gf"><label>Year</label><select id="sr-year"><option value="">Select</option><option>1st Year</option><option>2nd Year</option><option>3rd Year</option><option>4th Year</option><option>Staff</option></select></div>
+          <div class="gf"><label>Password *</label><input type="password" id="sr-pw" placeholder="Create password (min 6 chars)"/></div>
+          <div class="g-err" id="sr-err">Error</div>
+          <button class="g-sub g-sub-u" onclick="sRegister()">Create Account →</button>
+        </div>
+        <button class="g-back" onclick="showGate('choose')">← Back</button>
+      </div>
+    </div>
+
+    <!-- Admin -->
+    <div id="gf-admin" style="display:none">
+      <div class="gate-form">
+        <div style="text-align:center;font-size:2rem;margin-bottom:.5rem">🔐</div>
+        <h2>Admin Login</h2>
+        <div class="sub" style="color:#64748B;font-size:.84rem;text-align:center;margin-bottom:1.75rem">Restricted — Admin credentials required</div>
+        <div class="gf"><label>Username</label><input type="text" id="al-u" placeholder="admin" onkeydown="if(event.key==='Enter')aLogin()"/></div>
+        <div class="gf"><label>Password</label><input type="password" id="al-p" placeholder="••••••••" onkeydown="if(event.key==='Enter')aLogin()"/></div>
+        <div class="g-err" id="al-err">Invalid credentials</div>
+        <button class="g-sub g-sub-a" onclick="aLogin()">🔓 Login</button>
+        <button class="g-back" onclick="showGate('choose')">← Back</button>
+        <div class="g-hint">admin / library@2024</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ══ MODALS ══ -->
+<!-- Book Request -->
+<div class="mov" id="m-req"><div class="modal" style="max-width:480px">
+  <div class="mh"><div class="mt">Request Book</div><button class="mc" onclick="cm('m-req')">✕</button></div>
+  <div style="background:var(--cream2);border-radius:10px;padding:11px 13px;margin-bottom:1.1rem;display:flex;gap:10px;align-items:center">
+    <div style="font-size:1.7rem" id="rq-emoji">📖</div>
+    <div><div style="font-weight:500;font-size:.92rem" id="rq-title">—</div><div style="font-size:.75rem;color:rgba(15,14,26,.43)" id="rq-author">—</div></div>
+  </div>
+  <div class="fr fr2"><div><label>Your Name</label><input type="text" id="rq-name" readonly/></div><div><label>Member ID</label><input type="text" id="rq-mid" readonly/></div></div>
+  <div class="fr"><div><label>Preferred Date</label><input type="date" id="rq-date"/></div></div>
+  <div class="fr"><div><label>Note (optional)</label><textarea id="rq-note" placeholder="Why do you need this?"></textarea></div></div>
+  <input type="hidden" id="rq-bid"/>
+  <div style="display:flex;gap:8px;justify-content:flex-end">
+    <button class="btn btn-outline btn-sm" onclick="cm('m-req')">Cancel</button>
+    <button class="btn btn-gold" onclick="submitReq()">Send Request →</button>
+  </div>
+</div></div>
+
+<!-- Book Detail -->
+<div class="mov" id="m-detail"><div class="modal" style="max-width:520px">
+  <div class="mh"><div class="mt">Book Details</div><button class="mc" onclick="cm('m-detail')">✕</button></div>
+  <div id="m-detail-content"></div>
+</div></div>
+
+<!-- Return Book (student) -->
+<div class="mov" id="m-return"><div class="modal" style="max-width:440px">
+  <div class="mh"><div class="mt">Return Book</div><button class="mc" onclick="cm('m-return')">✕</button></div>
+  <div id="m-return-content"></div>
+  <input type="hidden" id="ret-lid"/>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem">
+    <button class="btn btn-outline btn-sm" onclick="cm('m-return')">Cancel</button>
+    <button class="btn btn-teal" onclick="doReturn()">✓ Confirm Return</button>
+  </div>
+</div></div>
+
+<!-- Renew Book -->
+<div class="mov" id="m-renew"><div class="modal" style="max-width:420px">
+  <div class="mh"><div class="mt">Renew Loan</div><button class="mc" onclick="cm('m-renew')">✕</button></div>
+  <div id="m-renew-content"></div>
+  <input type="hidden" id="ren-lid"/>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem">
+    <button class="btn btn-outline btn-sm" onclick="cm('m-renew')">Cancel</button>
+    <button class="btn btn-purple" onclick="doRenew()">🔄 Renew (+14 days)</button>
+  </div>
+</div></div>
+
+<!-- Admin: Add/Edit Book -->
+<div class="mov" id="m-book"><div class="modal" style="max-width:580px">
+  <div class="mh"><div class="mt" id="m-book-title">Add Book</div><button class="mc" onclick="cm('m-book')">✕</button></div>
+  <div class="fr fr2"><div><label>Title *</label><input type="text" id="b-title"/></div><div><label>Author *</label><input type="text" id="b-author"/></div></div>
+  <div class="fr fr3"><div><label>Genre *</label><select id="b-genre"><option value="">Select</option><option>Technology</option><option>Science</option><option>Literature</option><option>History</option><option>Mathematics</option><option>Philosophy</option><option>Fiction</option><option>Self-Help</option><option>Biography</option></select></div><div><label>Year</label><input type="number" id="b-year" min="1800" max="2025"/></div><div><label>Copies</label><input type="number" id="b-copies" min="1"/></div></div>
+  <div class="fr fr2"><div><label>ISBN</label><input type="text" id="b-isbn"/></div><div><label>Publisher</label><input type="text" id="b-pub"/></div></div>
+  <div class="fr fr2"><div><label>Shelf Location</label><input type="text" id="b-shelf"/></div><div><label>Rating (1–5)</label><input type="number" id="b-rating" min="1" max="5" step="0.1"/></div></div>
+  <div class="fr fr2"><div><label>Tags (comma separated)</label><input type="text" id="b-tags" placeholder="ai,python,ml"/></div><div><label>Description</label><input type="text" id="b-desc" placeholder="Brief description"/></div></div>
+  <input type="hidden" id="b-id"/>
+  <div style="display:flex;gap:8px;justify-content:flex-end"><button class="btn btn-outline" onclick="cm('m-book')">Cancel</button><button class="btn btn-gold" onclick="saveBook()">Save Book</button></div>
+</div></div>
+
+<!-- Admin: Approve/Reject -->
+<div class="mov" id="m-act"><div class="modal">
+  <div class="mh"><div class="mt" id="m-act-title">Action</div><button class="mc" onclick="cm('m-act')">✕</button></div>
+  <div id="m-act-detail" style="background:var(--cream2);border-radius:10px;padding:.85rem;margin-bottom:1rem;font-size:.86rem"></div>
+  <label>Admin Note (shown to student)</label><textarea id="m-act-note" style="margin-top:4px" placeholder="Optional message…"></textarea>
+  <div class="fr fr2 sg"><div><label>Issue Date</label><input type="date" id="m-act-issue"/></div><div><label>Due Date</label><input type="date" id="m-act-due"/></div></div>
+  <input type="hidden" id="m-act-id"/><input type="hidden" id="m-act-type"/>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.75rem">
+    <button class="btn btn-outline btn-sm" onclick="cm('m-act')">Cancel</button>
+    <button class="btn btn-sm" id="m-act-btn" onclick="confirmAct()">Confirm</button>
+  </div>
+</div></div>
+
+<!-- Admin: Member Detail -->
+<div class="mov" id="m-member"><div class="modal" style="max-width:580px">
+  <div class="mh"><div class="mt">Member Profile</div><button class="mc" onclick="cm('m-member')">✕</button></div>
+  <div id="m-member-content"></div>
+</div></div>
+
+<!-- Admin: Return (from admin side) -->
+<div class="mov" id="m-aret"><div class="modal" style="max-width:420px">
+  <div class="mh"><div class="mt">Process Return</div><button class="mc" onclick="cm('m-aret')">✕</button></div>
+  <div id="m-aret-content"></div>
+  <input type="hidden" id="aret-lid"/>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:1rem">
+    <button class="btn btn-outline btn-sm" onclick="cm('m-aret')">Cancel</button>
+    <button class="btn btn-teal" onclick="doAdminReturn()">✓ Process Return</button>
+  </div>
+</div></div>
+
+<!-- Change Password -->
+<div class="mov" id="m-pwd"><div class="modal">
+  <div class="mh"><div class="mt">Change Password</div><button class="mc" onclick="cm('m-pwd')">✕</button></div>
+  <div class="fr"><div><label>Current Password</label><input type="password" id="pwd-cur"/></div></div>
+  <div class="fr"><div><label>New Password</label><input type="password" id="pwd-new"/></div></div>
+  <div class="fr"><div><label>Confirm New Password</label><input type="password" id="pwd-cnf"/></div></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:.5rem">
+    <button class="btn btn-outline" onclick="cm('m-pwd')">Cancel</button>
+    <button class="btn btn-gold" onclick="changePwd()">Update</button>
+  </div>
+</div></div>
+
+<!-- ══ APP ══ -->
+<div id="app">
+<nav class="sidebar" id="sidebar">
+  <div class="sb-logo"><div class="sb-dot">📚</div><div class="sb-logo-text">LibraryAI</div><span class="sb-rbadge" id="rb">—</span></div>
+  <div id="sb-nav"></div>
+  <div class="sb-foot">
+    <div class="sb-av" id="sb-av" style="background:var(--gold-l);color:var(--gold-d)">?</div>
+    <div style="flex:1;min-width:0"><span style="display:block;font-size:.8rem;color:#1E293B;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="sb-name">—</span><small style="font-size:.68rem;color:#64748B" id="sb-sub">—</small></div>
+    <button class="sb-out" onclick="logout()" title="Logout">⏻</button>
+  </div>
+</nav>
+
+<div class="main">
+<div class="topbar">
+  <div class="tb-title" id="tb-title">—</div>
+  <div class="tb-qs"><span class="si">🔍</span><input type="text" id="tb-search" placeholder="Quick search books…" onkeydown="if(event.key==='Enter')gSearch()"/></div>
+  <div class="tb-r">
+    <div class="tb-nb" id="tb-nb" style="display:none" onclick="goNotif()">🔔<div class="tb-dot" id="tb-dot" style="display:none"></div></div>
+    <span class="flash" id="tb-flash" style="display:none" onclick="goNotif()">📨 0</span>
+    <button class="btn btn-outline btn-sm" onclick="reload()">↻ Refresh</button>
+    <button class="btn btn-gold btn-sm" id="tb-add" style="display:none" onclick="openAddBook()">+ Add Book</button>
+  </div>
+</div>
+
+<!-- ══ STUDENT PAGES ══ -->
+<div id="p-s-home" class="page">
+  <div class="hero">
+    <div class="ht">Student Portal</div>
+    <h1>Discover Your Next<br/><em>Great Read</em></h1>
+    <p>50+ books across 9 genres. Request, renew, and return all from here.</p>
+    <div class="hb">
+      <button class="btn btn-gold" onclick="sp('s-browse')">Browse All Books →</button>
+      <button class="btn btn-ol-light" onclick="sp('s-ai')">🤖 AI Search</button>
+      <button class="btn btn-ol-light" onclick="sp('s-myloans')">📋 My Loans</button>
+    </div>
+  </div>
+  <div class="g4" id="s-stats" style="margin-bottom:1.5rem"></div>
+  <div class="ph"><div><div class="pt">🔥 Popular Books</div><div class="ps">Most borrowed titles</div></div><button class="btn btn-outline btn-sm" onclick="sp('s-browse')">View All →</button></div>
+  <div class="ga" id="s-popular"></div>
+</div>
+
+<div id="p-s-browse" class="page">
+  <div class="ph"><div><div class="pt">Browse Books</div><div class="ps" id="s-browse-count">Loading…</div></div></div>
+  <div class="sb-bar">
+    <input type="text" id="s-bq" placeholder="🔍 Title, author, genre, ISBN…" oninput="debounce(renderSBrowse,300)()"/>
+    <select id="s-bg" onchange="renderSBrowse()"><option value="">All Genres</option><option>Technology</option><option>Science</option><option>Literature</option><option>History</option><option>Mathematics</option><option>Philosophy</option><option>Fiction</option><option>Self-Help</option><option>Biography</option></select>
+    <select id="s-ba" onchange="renderSBrowse()"><option value="">All</option><option value="1">Available Only</option></select>
+  </div>
+  <div class="ga" id="s-browse-grid"></div>
+</div>
+
+<div id="p-s-ai" class="page">
+  <div class="ph"><div><div class="pt">🤖 AI Search Assistant</div><div class="ps">Natural language search + knowledge base</div></div></div>
+  <div class="g2">
+    <div>
+      <div class="chat-wrap">
+        <div class="chat-msgs" id="chat-msgs">
+          <div class="cbr"><div class="cav cai">AI</div><div class="cb cb-ai">Hello! 👋 I'm your LibraryAI assistant.<br/>Ask about books: <em>"books on AI"</em>, <em>"suggest fiction"</em><br/>Or topics: <em>"what is machine learning?"</em>, <em>"explain big data"</em></div></div>
+        </div>
+        <div class="cf"><input type="text" id="chat-in" placeholder="Ask anything…" onkeydown="if(event.key==='Enter')sendChat()"/><button class="btn btn-gold btn-sm" onclick="sendChat()">Ask →</button></div>
+      </div>
+      <div style="margin-top:.6rem">
+        <div style="font-size:.74rem;color:rgba(15,14,26,.38);margin-bottom:.35rem">Try these:</div>
+        <span class="chip" onclick="qc('machine learning books')">ML Books</span>
+        <span class="chip" onclick="qc('available science books')">Avail. Science</span>
+        <span class="chip" onclick="qc('what is deep learning?')">Deep Learning?</span>
+        <span class="chip" onclick="qc('top rated books')">Top Rated</span>
+        <span class="chip" onclick="qc('suggest good fiction novel')">Fiction</span>
+        <span class="chip" onclick="qc('what is cloud computing?')">Cloud?</span>
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:500;margin-bottom:.65rem">📖 Knowledge Topics</div>
+      <span class="chip" onclick="qc('Explain Big Data Analytics')">Big Data</span>
+      <span class="chip" onclick="qc('What is artificial intelligence?')">AI</span>
+      <span class="chip" onclick="qc('Explain machine learning')">ML</span>
+      <span class="chip" onclick="qc('What is cloud computing?')">Cloud</span>
+      <span class="chip" onclick="qc('Explain data structures')">Data Structures</span>
+      <span class="chip" onclick="qc('What is neural network?')">Neural Nets</span>
+      <span class="chip" onclick="qc('Python programming language')">Python</span>
+      <span class="chip" onclick="qc('What are algorithms?')">Algorithms</span>
+      <div style="margin-top:1rem;padding:.85rem;background:var(--cream2);border-radius:10px;font-size:.81rem;color:rgba(15,14,26,.52);line-height:1.7">💡 Ask about any book topic, get explanations, or discover new books. The AI searches our real catalog of 50+ books.</div>
+    </div>
+  </div>
+</div>
+
+<div id="p-s-myloans" class="page">
+  <div class="ph"><div><div class="pt">📋 My Loans & Requests</div><div class="ps">Track all your books — return or renew before due date</div></div></div>
+  <div class="tab-bar">
+    <button class="tab-btn on" onclick="switchLoanTab('active',this)">Active Loans</button>
+    <button class="tab-btn" onclick="switchLoanTab('requests',this)">My Requests</button>
+    <button class="tab-btn" onclick="switchLoanTab('history',this)">History</button>
+  </div>
+  <div id="s-loans-content"></div>
+</div>
+
+<!-- ══ ADMIN PAGES ══ -->
+<div id="p-a-dash" class="page">
+  <div class="ph"><div><div class="pt">Admin Dashboard</div><div class="ps" id="a-dash-date"></div></div></div>
+  <div class="g4" id="a-stats"></div>
+  <div class="g2 sg">
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">Monthly Borrowing Trend</div><canvas id="trend-chart" height="185"></canvas></div>
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">Genre Distribution</div><canvas id="genre-chart" height="185"></canvas></div>
+  </div>
+  <div class="g2 sg">
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">🔔 Pending Requests <span id="a-pend-ct" style="color:var(--rust);font-size:.82rem"></span></div><div id="a-dash-pend"></div></div>
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">⚠️ Overdue Books</div><div id="a-dash-ov"></div></div>
+  </div>
+  <div class="card sg"><div style="font-weight:500;margin-bottom:.85rem">📚 Top Borrowed Books</div><div id="a-top-books"></div></div>
+</div>
+
+<div id="p-a-requests" class="page">
+  <div class="ph">
+    <div><div class="pt">Book Requests</div><div class="ps">Approve or reject student requests</div></div>
+    <select id="a-req-filter" onchange="renderAReqs()" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem"><option value="">All</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option></select>
+  </div>
+  <div id="a-req-list"></div>
+</div>
+
+<div id="p-a-loans" class="page">
+  <div class="ph">
+    <div><div class="pt">Active Loans</div><div class="ps" id="a-loans-sub">All issued books</div></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <input type="text" id="a-loans-q" placeholder="Search member, book…" style="width:180px;padding:7px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem" oninput="renderALoans()"/>
+      <select id="a-loans-s" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem" onchange="renderALoans()"><option value="">All Status</option><option value="active">Active</option><option value="overdue">Overdue</option></select>
+    </div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Book</th><th>Member</th><th>ID</th><th>Dept</th><th>Issued</th><th>Due Date</th><th>Days Left</th><th>Renewals</th><th>Status</th><th>Fine</th><th>Actions</th></tr></thead>
+    <tbody id="a-loans-table"></tbody>
+  </table></div>
+</div>
+
+<div id="p-a-books" class="page">
+  <div class="ph">
+    <div><div class="pt">Books Catalog</div><div class="ps" id="a-books-sub">Loading…</div></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <input type="text" id="a-bq" placeholder="Search…" style="width:170px;padding:7px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem" oninput="renderABooks()"/>
+      <select id="a-bg" style="padding:7px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem" onchange="renderABooks()"><option value="">All Genres</option><option>Technology</option><option>Science</option><option>Literature</option><option>History</option><option>Fiction</option><option>Self-Help</option><option>Biography</option><option>Mathematics</option><option>Philosophy</option></select>
+    </div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Title</th><th>Author</th><th>Genre</th><th>ISBN</th><th>Copies</th><th>Available</th><th>Shelf</th><th>Rating</th><th>Borrows</th><th>Actions</th></tr></thead>
+    <tbody id="a-books-table"></tbody>
+  </table></div>
+</div>
+
+<div id="p-a-members" class="page">
+  <div class="ph">
+    <div><div class="pt">Members / Students</div><div class="ps" id="a-mem-sub">All registered members</div></div>
+    <input type="text" id="a-mq" placeholder="Search name, ID, email…" style="width:210px;padding:7px 12px;border-radius:8px;border:1px solid var(--border);font-family:'DM Sans',sans-serif;font-size:.82rem" oninput="renderAMembers()"/>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>#</th><th>Name</th><th>Member ID</th><th>Department</th><th>Year</th><th>Email</th><th>Phone</th><th>Active Loans</th><th>Total Loans</th><th>Joined</th><th>Actions</th></tr></thead>
+    <tbody id="a-mem-table"></tbody>
+  </table></div>
+</div>
+
+<div id="p-a-analytics" class="page">
+  <div class="ph"><div><div class="pt">Analytics</div></div></div>
+  <div class="g4" id="a-an-stats"></div>
+  <div class="g2 sg">
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">Genre Demand</div><div id="a-an-genre"></div></div>
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">Top Requested Books</div><div id="a-an-top"></div></div>
+  </div>
+  <div class="g2 sg">
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">Request Status</div><canvas id="status-chart" height="180"></canvas></div>
+    <div class="card"><div style="font-weight:500;margin-bottom:.85rem">📈 On-Time Returns</div><div id="a-an-returns" style="padding-top:.5rem"></div></div>
+  </div>
+</div>
+
+<div id="p-a-reports" class="page">
+  <div class="ph"><div><div class="pt">Reports</div></div></div>
+  <div class="g2">
+    <div class="card">
+      <div style="font-weight:500;margin-bottom:.65rem">Generate Report</div>
+      <select id="a-rtype" style="width:100%;margin-bottom:.65rem"><option value="pending">Pending Requests</option><option value="overdue">Overdue Books</option><option value="popular">Most Requested</option><option value="members">All Members</option><option value="stock">Stock Summary</option><option value="fines">Fines Summary</option></select>
+      <button class="btn btn-gold" style="width:100%" onclick="genReport()">📋 Generate</button>
+    </div>
+    <div class="card"><div style="font-weight:500;margin-bottom:.65rem">Quick Summary</div><div id="a-qsummary"></div></div>
+  </div>
+  <div class="card sg">
+    <div style="display:flex;justify-content:space-between;margin-bottom:.65rem">
+      <div style="font-weight:500" id="a-report-title">Report Preview</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-outline btn-sm" onclick="exportCSV()">⬇ CSV</button>
+        <button class="btn btn-outline btn-sm" onclick="window.print()">🖨 Print</button>
+      </div>
+    </div>
+    <div id="a-report-out"><div class="empty"><div class="big">📋</div>Generate a report to preview</div></div>
+  </div>
+</div>
+
+<div id="p-a-settings" class="page">
+  <div class="ph"><div><div class="pt">Settings</div></div></div>
+  <div class="g2">
+    <div class="card">
+      <div style="font-weight:500;margin-bottom:1rem">🔐 Admin Security</div>
+      <div class="fr"><div><label>Admin Username</label><input type="text" id="set-uname" placeholder="Current username"/></div></div>
+      <button class="btn btn-gold" onclick="om('m-pwd')">🔑 Change Password</button>
+    </div>
+    <div class="card">
+      <div style="font-weight:500;margin-bottom:1rem">📚 Library Rules</div>
+      <div class="fr fr2">
+        <div><label>Loan Period (days)</label><input type="number" id="set-loan" value="14" min="1" max="90"/></div>
+        <div><label>Max Books / Member</label><input type="number" id="set-max" value="3" min="1" max="10"/></div>
+      </div>
+      <div class="fr fr2">
+        <div><label>Fine per Day (₹)</label><input type="number" id="set-fine" value="2" min="0" max="50"/></div>
+        <div><label>Max Renewals</label><input type="number" id="set-ren" value="2" min="0" max="5"/></div>
+      </div>
+      <button class="btn btn-teal" onclick="saveSettings()">Save Settings</button>
+    </div>
+  </div>
+  <div class="card sg">
+    <div style="font-weight:500;margin-bottom:.65rem">💾 System</div>
+    <div style="display:flex;gap:.6rem;flex-wrap:wrap"><button class="btn btn-outline" onclick="exportBooks()">⬇ Export Books CSV</button><button class="btn btn-outline" onclick="exportMembers()">⬇ Export Members CSV</button></div>
+    <div style="margin-top:.85rem;font-size:.78rem;color:rgba(15,14,26,.35)" id="set-info"></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+'use strict';
+// ════════════════════════════════
+//  STANDALONE MOCK BACKEND (localStorage DB) — replaces Flask
+// ════════════════════════════════
+const LS_KEY='libraryai_pro_db_v1';
+
+function sha256ish(s){ // simple deterministic hash (not crypto-secure, fine for this demo)
+  let h1=0xdeadbeef, h2=0x41c6ce57;
+  for(let i=0;i<s.length;i++){
+    const ch=s.charCodeAt(i);
+    h1=Math.imul(h1^ch,2654435761); h2=Math.imul(h2^ch,1597334677);
+  }
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (h1>>>0).toString(16)+(h2>>>0).toString(16);
+}
+const hashPw=(pw)=>sha256ish(String(pw||''));
+const todayISO=()=>new Date().toISOString().split('T')[0];
+const nowISO=()=>new Date().toISOString();
+function addDaysISO(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+
+function defaultBooks(){
+  const raw=[
+    ['Hands-On Machine Learning','Aurélien Géron','978-1492032649','Technology',2022,"O'Reilly",4,'Best ML practical guide','B4',4.8,'ml,python,scikit'],
+    ['Clean Code','Robert C. Martin','978-0132350884','Technology',2008,'Prentice Hall',5,'Write clean readable software','C2',4.9,'software,coding,best-practices'],
+    ['Introduction to Algorithms','Cormen et al.','978-0262033848','Technology',2009,'MIT Press',3,'CLRS bible of algorithms','C5',4.7,'algorithms,cs,theory'],
+    ['Deep Learning','Goodfellow et al.','978-0262035613','Technology',2016,'MIT Press',3,'Neural networks deep dive','B5',4.6,'deep-learning,neural-nets,ai'],
+    ['Python Crash Course','Eric Matthes','978-1593279288','Technology',2019,'No Starch',5,'Python beginner guide','D1',4.5,'python,beginner,programming'],
+    ['The Pragmatic Programmer','Hunt & Thomas','978-0135957059','Technology',2019,'Addison-Wesley',4,'Software craftsmanship','C3',4.8,'programming,career,software'],
+    ['Artificial Intelligence','Stuart Russell','978-0136042594','Technology',2020,'Pearson',4,'AI comprehensive textbook','B1',4.7,'ai,machine-learning,textbook'],
+    ['Data Science from Scratch','Joel Grus','978-1492041139','Technology',2019,"O'Reilly",3,'DS fundamentals','E3',4.3,'data-science,python,statistics'],
+    ['Design Patterns','Gang of Four','978-0201633610','Technology',1994,'Addison-Wesley',3,'Software design patterns','C6',4.7,'design-patterns,oop,software'],
+    ['The Art of Computer Programming','Donald Knuth','978-0201896831','Technology',2011,'Addison-Wesley',2,'Knuth masterwork','C7',4.8,'algorithms,theory,computer-science'],
+    ['Sapiens','Yuval Harari','978-0062316110','History',2015,'Harper',4,'Brief history of humankind','A1',4.8,'history,humanity,evolution'],
+    ['Guns Germs and Steel','Jared Diamond','978-0393317558','History',1997,'Norton',3,'Fate of human societies','A2',4.5,'history,civilization,geography'],
+    ['The Rise and Fall of the Roman Empire','Edward Gibbon','978-0140437645','History',1776,'Penguin',2,'Classic Roman history','A3',4.4,'rome,empire,ancient-history'],
+    ['A People History of the United States','Howard Zinn','978-0060838652','History',2003,'Harper',2,'US history from below','A4',4.3,'american-history,politics,society'],
+    ['The Silk Roads','Peter Frankopan','978-1101946329','History',2015,'Vintage',2,'History through trade routes','A5',4.4,'silk-road,trade,world-history'],
+    ['A Brief History of Time','Stephen Hawking','978-0553380163','Science',1988,'Bantam',4,'Space and time explained','S1',4.6,'physics,cosmology,space'],
+    ['Cosmos','Carl Sagan','978-0345539434','Science',1980,'Ballantine',4,'The universe explained','S2',4.8,'astronomy,space,science'],
+    ['The Selfish Gene','Richard Dawkins','978-0198788607','Science',1976,'Oxford',3,'Gene-centred evolution','S3',4.5,'biology,evolution,genetics'],
+    ['A Short History of Nearly Everything','Bill Bryson','978-0767908184','Science',2003,'Broadway',3,'Science made fun','S4',4.7,'science,history,popular-science'],
+    ['The Double Helix','James Watson','978-0743216302','Science',1968,'Touchstone',2,'DNA discovery story','S5',4.2,'dna,biology,discovery'],
+    ['1984','George Orwell','978-0451524935','Fiction',1949,'Signet',6,'Dystopian classic','F1',4.9,'dystopia,classic,political'],
+    ['Dune','Frank Herbert','978-0441013593','Fiction',1965,'Ace',4,'Sci-fi epic masterpiece','F2',4.9,'scifi,epic,classic'],
+    ['Brave New World','Aldous Huxley','978-0060850524','Fiction',1932,'Harper',4,'Dystopia classic','F3',4.5,'dystopia,classic,scifi'],
+    ['The Hitchhiker Guide to the Galaxy','Douglas Adams','978-0345391803','Fiction',1979,'Del Rey',4,'Sci-fi comedy classic','F4',4.7,'scifi,comedy,classic'],
+    ['Foundation','Isaac Asimov','978-0553293357','Fiction',1951,'Bantam',3,'Galactic empire saga','F5',4.8,'scifi,asimov,epic'],
+    ['The Great Gatsby','F. Scott Fitzgerald','978-0743273565','Literature',1925,'Scribner',5,'Jazz Age classic','L1',4.3,'classic,american,novel'],
+    ['To Kill a Mockingbird','Harper Lee','978-0061935466','Literature',1960,'Harper',4,'American classic','L2',4.7,'classic,american,justice'],
+    ['One Hundred Years of Solitude','Gabriel Garcia Marquez','978-0060883287','Literature',1967,'Harper',3,'Magical realism masterpiece','L3',4.7,'magical-realism,latin-american,classic'],
+    ['Crime and Punishment','Fyodor Dostoevsky','978-0486415871','Literature',1866,'Dover',3,'Russian classic thriller','L4',4.6,'russian,classic,psychology'],
+    ['Pride and Prejudice','Jane Austen','978-0141439518','Literature',1813,'Penguin',4,'English classic romance','L5',4.5,'classic,romance,english'],
+    ['Thinking Fast and Slow','Daniel Kahneman','978-0374533557','Self-Help',2011,'FSG',3,'Decision psychology','SH1',4.7,'psychology,decision-making,behaviour'],
+    ['Atomic Habits','James Clear','978-0735211292','Self-Help',2018,'Avery',4,'Habit formation','SH2',4.8,'habits,productivity,self-improvement'],
+    ['The 7 Habits of Highly Effective People','Stephen Covey','978-1451639612','Self-Help',1989,'Free Press',3,'Personal effectiveness','SH3',4.5,'habits,effectiveness,leadership'],
+    ['Rich Dad Poor Dad','Robert Kiyosaki','978-1612680194','Self-Help',1997,'Plata',4,'Financial literacy','SH4',4.3,'finance,money,investing'],
+    ['How to Win Friends and Influence People','Dale Carnegie','978-0671027032','Self-Help',1936,'Simon & Schuster',3,'Interpersonal skills','SH5',4.4,'communication,people-skills,classic'],
+    ['Wings of Fire','APJ Abdul Kalam','978-8173711466','Biography',1999,'Universities Press',6,'Inspiring autobiography','BG1',4.9,'autobiography,india,science'],
+    ['The Story of My Experiments with Truth','Mahatma Gandhi','978-0807059098','Biography',1927,'Beacon',3,'Gandhi autobiography','BG2',4.7,'autobiography,india,philosophy'],
+    ['Steve Jobs','Walter Isaacson','978-1451648539','Biography',2011,'Simon & Schuster',3,'Jobs biography','BG3',4.6,'biography,technology,leadership'],
+    ['Elon Musk','Walter Isaacson','978-1982181284','Biography',2023,'Simon & Schuster',3,'Musk biography','BG4',4.4,'biography,technology,entrepreneurship'],
+    ['The Diary of a Young Girl','Anne Frank','978-0553296983','Biography',1947,'Bantam',4,'WWII diary classic','BG5',4.8,'diary,wwii,history'],
+    ['Introduction to Linear Algebra','Gilbert Strang','978-0980232776','Mathematics',2016,'Wellesley-Cambridge',3,'LA textbook','M1',4.6,'linear-algebra,mathematics,engineering'],
+    ['Calculus','James Stewart','978-1285740621','Mathematics',2015,'Cengage',3,'Calculus textbook','M2',4.4,'calculus,mathematics,textbook'],
+    ['Discrete Mathematics','Kenneth Rosen','978-0073383095','Mathematics',2011,'McGraw-Hill',3,'DM for CS','M3',4.3,'discrete-math,cs,logic'],
+    ['The Art of Problem Solving Vol 1','Sandor Lehoczky','978-0977304561','Mathematics',2006,'Art of Problem Solving',2,'Competition math','M4',4.7,'competition-math,problem-solving'],
+    ['Probability and Statistics','Morris DeGroot','978-0321500465','Mathematics',2012,'Pearson',3,'Prob & Stats textbook','M5',4.2,'probability,statistics,mathematics'],
+    ['The Republic','Plato','978-0872201361','Philosophy',380,'Hackett',4,'Political philosophy classic','P1',4.5,'philosophy,plato,politics'],
+    ['Thus Spoke Zarathustra','Friedrich Nietzsche','978-0140441185','Philosophy',1883,'Penguin',3,'Nietzsche masterwork','P2',4.4,'philosophy,nietzsche,existentialism'],
+    ['Meditations','Marcus Aurelius','978-0812968255','Philosophy',180,'Modern Library',4,'Stoic wisdom','P3',4.7,'stoicism,philosophy,wisdom'],
+    ['The Problems of Philosophy','Bertrand Russell','978-0195002119','Philosophy',1912,'Oxford',2,'Philosophy intro','P4',4.3,'philosophy,russell,introduction'],
+    ['Being and Time','Martin Heidegger','978-0061575594','Philosophy',1927,'Harper',2,'Existentialist philosophy','P5',4.2,'philosophy,existentialism,heidegger'],
+  ];
+  return raw.map((b,i)=>({
+    id:i+1, title:b[0], author:b[1], isbn:b[2], genre:b[3], year:b[4], publisher:b[5],
+    copies:b[6], available:b[6], description:b[7], shelf:b[8], rating:b[9],
+    borrow_count:0, tags:b[10], added_at:nowISO()
+  }));
+}
+
+function defaultMembers(pw){
+  const raw=[
+    ['Arjun Kumar','STU-001','arjun@college.edu','+91 9876543210','CSE','3rd Year'],
+    ['Priya Sharma','STU-002','priya@college.edu','+91 9876543211','ECE','2nd Year'],
+    ['Rahul Verma','STU-003','rahul@college.edu','+91 9876543212','MECH','4th Year'],
+    ['Sneha Reddy','STU-004','sneha@college.edu','+91 9876543213','CSE','1st Year'],
+    ['Kiran Nair','FAC-001','kiran@college.edu','+91 9876543214','CSE','Staff'],
+    ['Amit Joshi','STU-005','amit@college.edu','+91 9876543215','EEE','3rd Year'],
+    ['Divya Patel','STU-006','divya@college.edu','+91 9876543216','CIVIL','2nd Year'],
+    ['Fazil Ahmed','STU-007','fazil@college.edu','+91 9876543217','CSE','4th Year'],
+  ];
+  return raw.map((m,i)=>({
+    id:i+1, name:m[0], member_id:m[1], email:m[2], phone:m[3], department:m[4], year:m[5],
+    password:pw, created_at:nowISO(), last_login:null
+  }));
+}
+
+function freshDB(){
+  const pw=hashPw('library@2024');
+  return {
+    admins:[{id:1,name:'Library Admin',username:'admin',password:pw,last_login:null}],
+    members:defaultMembers(pw),
+    books:defaultBooks(),
+    requests:[],
+    loans:[],
+    settings:{loan_days:'14',max_books:'3',fine_per_day:'2',library_name:'LibraryAI Pro',max_renewals:'2'},
+    _nextId:{requests:1,loans:1,books:51,members:9}
+  };
+}
+
+function loadDB(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  const db=freshDB();
+  saveDB(db);
+  return db;
+}
+function saveDB(db){
+  try{ localStorage.setItem(LS_KEY, JSON.stringify(db)); }catch(e){}
+}
+let DB=loadDB();
+function persist(){ saveDB(DB); }
+function nextId(table){
+  DB._nextId=DB._nextId||{};
+  const n=(DB._nextId[table]||1);
+  DB._nextId[table]=n+1;
+  return n;
+}
+
+function parseQuery(path){
+  const [p,qs]=path.split('?');
+  const params={};
+  if(qs) qs.split('&').forEach(kv=>{
+    const [k,v]=kv.split('=');
+    params[decodeURIComponent(k)]=decodeURIComponent(v||'');
+  });
+  return {p, params};
+}
+
+function getSettingsLoanDays(){
+  return parseInt(DB.settings.loan_days||'14',10);
+}
+
+function updateOverdueStatuses(){
+  const today=todayISO();
+  DB.loans.forEach(l=>{
+    if(l.status==='active' && l.due_date && l.due_date<today) l.status='overdue';
+  });
+}
+
+function bookWithDefaults(b){ return b; }
+
+function memberPublic(m){ const c={...m}; delete c.password; return c; }
+
+function findBook(id){ return DB.books.find(b=>b.id===Number(id)); }
+function findMember(mid){ return DB.members.find(m=>m.member_id===mid); }
+function findRequest(id){ return DB.requests.find(r=>r.id===Number(id)); }
+function findLoan(id){ return DB.loans.find(l=>l.id===Number(id)); }
+
+// ─── Router ─────────────────────────────────────────────
+async function mockApi(path, opts={}){
+  const method=(opts.method||'GET').toUpperCase();
+  let body={};
+  try{ body=opts.body?JSON.parse(opts.body):{}; }catch(e){}
+
+  const {p, params}=parseQuery(path);
+  const segs=p.split('/').filter(Boolean);
+
+  function ok(data){ return data; }
+  function err(msg,code){ const e=new Error(msg); e.code=code; throw e; }
+
+  // /test
+  if(p==='/test' && method==='GET') return ok({ok:true,message:'LibraryAI Pro (standalone) running!'});
+
+  // ── AUTH ──
+  if(p==='/admin/login' && method==='POST'){
+    const adm=DB.admins.find(a=>a.username===body.username && a.password===hashPw(body.password||''));
+    if(!adm) err('Invalid credentials',401);
+    adm.last_login=nowISO(); persist();
+    return ok({ok:true,admin:{id:adm.id,name:adm.name,username:adm.username}});
+  }
+  if(p==='/student/login' && method==='POST'){
+    const s=DB.members.find(m=>m.member_id===body.member_id && m.password===hashPw(body.password||''));
+    if(!s) err('Invalid Member ID or password',401);
+    return ok({ok:true,student:memberPublic(s)});
+  }
+  if(p==='/student/register' && method==='POST'){
+    const exists=DB.members.find(m=>m.member_id===body.member_id || (body.email && m.email===body.email));
+    if(exists) err('Member ID or Email already exists',409);
+    const m={
+      id:nextId('members'), name:body.name, member_id:body.member_id, email:body.email||'',
+      phone:body.phone||'', department:body.department||'', year:body.year||'',
+      password:hashPw(body.password), created_at:nowISO(), last_login:null
+    };
+    DB.members.push(m); persist();
+    return ok({ok:true});
+  }
+
+  // ── BOOKS ──
+  if(p==='/books' && method==='GET'){
+    let rows=[...DB.books];
+    const search=(params.q||'').toLowerCase();
+    if(search) rows=rows.filter(b=>
+      (b.title||'').toLowerCase().includes(search) ||
+      (b.author||'').toLowerCase().includes(search) ||
+      (b.genre||'').toLowerCase().includes(search) ||
+      (b.isbn||'').toLowerCase().includes(search)
+    );
+    if(params.genre) rows=rows.filter(b=>b.genre===params.genre);
+    if(params.available==='1') rows=rows.filter(b=>b.available>0);
+    rows.sort((a,b)=>a.title.localeCompare(b.title));
+    return ok(rows);
+  }
+  if(segs[0]==='books' && segs.length===2 && method==='GET'){
+    const b=findBook(segs[1]);
+    if(!b) err('Not found',404);
+    return ok(b);
+  }
+  if(p==='/books' && method==='POST'){
+    const copies=body.copies!=null?Number(body.copies):1;
+    const b={
+      id:nextId('books'), title:body.title, author:body.author, isbn:body.isbn||'',
+      genre:body.genre, year:body.year, publisher:body.publisher||'',
+      copies, available:copies, description:body.description||'', shelf:body.shelf||'',
+      rating:body.rating!=null?Number(body.rating):4.0, borrow_count:0, tags:body.tags||'',
+      added_at:nowISO()
+    };
+    DB.books.push(b); persist();
+    return ok({ok:true,id:b.id});
+  }
+  if(segs[0]==='books' && segs.length===2 && method==='PUT'){
+    const b=findBook(segs[1]);
+    if(!b) err('Not found',404);
+    Object.assign(b,{
+      title:body.title, author:body.author, isbn:body.isbn||'', genre:body.genre,
+      year:body.year, publisher:body.publisher||'', copies:body.copies!=null?Number(body.copies):b.copies,
+      description:body.description||'', shelf:body.shelf||'', rating:body.rating!=null?Number(body.rating):b.rating,
+      tags:body.tags||''
+    });
+    persist();
+    return ok({ok:true});
+  }
+  if(segs[0]==='books' && segs.length===2 && method==='DELETE'){
+    DB.books=DB.books.filter(b=>b.id!==Number(segs[1]));
+    persist();
+    return ok({ok:true});
+  }
+
+  // ── MEMBERS ──
+  if(p==='/members' && method==='GET'){
+    let rows=[...DB.members];
+    const search=(params.q||'').toLowerCase();
+    if(search) rows=rows.filter(m=>
+      (m.name||'').toLowerCase().includes(search) ||
+      (m.member_id||'').toLowerCase().includes(search) ||
+      (m.email||'').toLowerCase().includes(search)
+    );
+    rows.sort((a,b)=>a.name.localeCompare(b.name));
+    return ok(rows.map(m=>{
+      const active_loans=DB.loans.filter(l=>l.member_id===m.member_id && (l.status==='active'||l.status==='overdue')).length;
+      const total_loans=DB.loans.filter(l=>l.member_id===m.member_id).length;
+      return {...memberPublic(m), active_loans, total_loans};
+    }));
+  }
+  if(segs[0]==='members' && segs.length===2 && method==='GET'){
+    const m=findMember(segs[1]);
+    if(!m) err('Not found',404);
+    const loans=DB.loans.filter(l=>l.member_id===m.member_id)
+      .map(l=>{
+        const b=findBook(l.book_id)||{};
+        return {...l, book_title:b.title, author:b.author, genre:b.genre, shelf:b.shelf};
+      }).sort((a,b)=>b.id-a.id);
+    return ok({...memberPublic(m), loans});
+  }
+  if(segs[0]==='members' && segs.length===2 && method==='PUT'){
+    const m=findMember(segs[1]);
+    if(!m) err('Not found',404);
+    Object.assign(m,{name:body.name, email:body.email||'', phone:body.phone||'', department:body.department||'', year:body.year||''});
+    persist();
+    return ok({ok:true});
+  }
+  if(segs[0]==='members' && segs.length===2 && method==='DELETE'){
+    DB.members=DB.members.filter(m=>m.member_id!==segs[1]);
+    persist();
+    return ok({ok:true});
+  }
+
+  // ── REQUESTS ──
+  if(p==='/requests' && method==='GET'){
+    let rows=[...DB.requests];
+    if(params.status) rows=rows.filter(r=>r.status===params.status);
+    rows.sort((a,b)=>b.id-a.id);
+    return ok(rows.map(r=>{
+      const b=findBook(r.book_id)||{};
+      return {...r, book_title:b.title, author:b.author, genre:b.genre, book_available:b.available};
+    }));
+  }
+  if(p==='/requests' && method==='POST'){
+    const dup=DB.requests.find(r=>r.book_id===body.book_id && r.member_id===body.member_id && r.status==='pending');
+    if(dup) err('Already have a pending request for this book',409);
+    const r={
+      id:nextId('requests'), book_id:body.book_id, member_id:body.member_id, member_name:body.member_name,
+      department:body.department||'', preferred_date:body.preferred_date||'', note:body.note||'',
+      status:'pending', admin_note:null, action_time:null, created_at:nowISO()
+    };
+    DB.requests.push(r); persist();
+    return ok({ok:true,id:r.id});
+  }
+  if(segs[0]==='requests' && segs.length===3 && segs[2]==='approve' && method==='POST'){
+    const r=findRequest(segs[1]);
+    if(!r) err('Not found',404);
+    const b=findBook(r.book_id);
+    if(!b || b.available<1) err('No copies available',400);
+    r.status='approved'; r.admin_note=body.admin_note||''; r.action_time=nowISO();
+    const days=getSettingsLoanDays();
+    const due=body.due_date || addDaysISO(days);
+    const loan={
+      id:nextId('loans'), book_id:r.book_id, member_id:r.member_id, member_name:r.member_name,
+      department:r.department||'', issue_date:todayISO(), due_date:due, return_date:null,
+      status:'active', fine:0, renewals:0, request_id:r.id
+    };
+    DB.loans.push(loan);
+    b.available-=1; b.borrow_count=(b.borrow_count||0)+1;
+    persist();
+    return ok({ok:true,loan_id:loan.id});
+  }
+  if(segs[0]==='requests' && segs.length===3 && segs[2]==='reject' && method==='POST'){
+    const r=findRequest(segs[1]);
+    if(!r) err('Not found',404);
+    r.status='rejected'; r.admin_note=body.admin_note||''; r.action_time=nowISO();
+    persist();
+    return ok({ok:true});
+  }
+
+  // ── LOANS ──
+  if(p==='/loans' && method==='GET'){
+    updateOverdueStatuses(); persist();
+    let rows=[...DB.loans];
+    if(params.status) rows=rows.filter(l=>l.status===params.status);
+    if(params.member_id) rows=rows.filter(l=>l.member_id===params.member_id);
+    rows.sort((a,b)=>b.id-a.id);
+    return ok(rows.map(l=>{
+      const b=findBook(l.book_id)||{};
+      return {...l, book_title:b.title, author:b.author, genre:b.genre, shelf:b.shelf, isbn:b.isbn};
+    }));
+  }
+  if(segs[0]==='loans' && segs.length===3 && segs[2]==='return' && method==='POST'){
+    const l=findLoan(segs[1]);
+    if(!l) err('Not found',404);
+    const today=todayISO();
+    let fine=0;
+    if(l.due_date && l.due_date<today){
+      const days=Math.round((new Date(today)-new Date(l.due_date))/86400000);
+      fine=Math.round(days*2.0*100)/100;
+    }
+    l.status='returned'; l.return_date=today; l.fine=fine;
+    const b=findBook(l.book_id);
+    if(b) b.available+=1;
+    persist();
+    return ok({ok:true,fine,return_date:today});
+  }
+  if(segs[0]==='loans' && segs.length===3 && segs[2]==='renew' && method==='POST'){
+    const l=findLoan(segs[1]);
+    if(!l || !(l.status==='active'||l.status==='overdue')) err('Cannot renew',400);
+    const renewals=l.renewals||0;
+    if(renewals>=2) err('Max 2 renewals allowed',400);
+    const days=getSettingsLoanDays();
+    const newDue=addDaysISO(days);
+    l.due_date=newDue; l.status='active'; l.renewals=renewals+1;
+    persist();
+    return ok({ok:true,new_due:newDue});
+  }
+
+  // ── DASHBOARD / ANALYTICS ──
+  if(p==='/dashboard' && method==='GET'){
+    updateOverdueStatuses(); persist();
+    const genreCount={};
+    DB.books.forEach(b=>{ genreCount[b.genre]=(genreCount[b.genre]||0)+1; });
+    const genre_dist=Object.entries(genreCount).map(([genre,cnt])=>({genre,cnt})).sort((a,b)=>b.cnt-a.cnt);
+    const top_books=[...DB.books].sort((a,b)=>(b.borrow_count||0)-(a.borrow_count||0)).slice(0,8)
+      .map(b=>({title:b.title,author:b.author,borrow_count:b.borrow_count||0}));
+    const overdue_list=DB.loans.filter(l=>l.status==='overdue')
+      .sort((a,b)=>(a.due_date||'').localeCompare(b.due_date||'')).slice(0,10)
+      .map(l=>({...l, book_title:(findBook(l.book_id)||{}).title}));
+    const recent_loans=[...DB.loans].sort((a,b)=>b.id-a.id).slice(0,8)
+      .map(l=>({...l, book_title:(findBook(l.book_id)||{}).title}));
+    return ok({
+      total_books: DB.books.length,
+      available_books: DB.books.reduce((s,b)=>s+(b.available||0),0),
+      total_members: DB.members.length,
+      active_loans: DB.loans.filter(l=>l.status==='active').length,
+      overdue_loans: DB.loans.filter(l=>l.status==='overdue').length,
+      pending_reqs: DB.requests.filter(r=>r.status==='pending').length,
+      total_requests: DB.requests.length,
+      genre_dist, top_books, overdue_list, recent_loans
+    });
+  }
+  if(p==='/analytics' && method==='GET'){
+    const genreMap={};
+    DB.books.forEach(b=>{
+      genreMap[b.genre]=genreMap[b.genre]||{total:0,cnt:0};
+      genreMap[b.genre].total+=(b.borrow_count||0);
+      genreMap[b.genre].cnt+=1;
+    });
+    const genre_demand=Object.entries(genreMap).map(([genre,v])=>({genre,total:v.total,cnt:v.cnt})).sort((a,b)=>b.total-a.total);
+    const monthly=[['Jan',45],['Feb',52],['Mar',60],['Apr',48],['May',70],['Jun',65],['Jul',80],['Aug',55],['Sep',72],['Oct',68],['Nov',85],['Dec',90]]
+      .map(([month,count])=>({month,count}));
+    const statusMap={};
+    DB.requests.forEach(r=>{ statusMap[r.status]=(statusMap[r.status]||0)+1; });
+    const req_status=Object.entries(statusMap).map(([status,cnt])=>({status,cnt}));
+    const reqCountByBook={};
+    DB.requests.forEach(r=>{ reqCountByBook[r.book_id]=(reqCountByBook[r.book_id]||0)+1; });
+    const top_requested=Object.entries(reqCountByBook)
+      .map(([book_id,cnt])=>({book_id:Number(book_id), title:(findBook(book_id)||{}).title, cnt}))
+      .sort((a,b)=>b.cnt-a.cnt).slice(0,8);
+    const fine_collected=DB.loans.filter(l=>l.fine>0).reduce((s,l)=>s+l.fine,0);
+    const returns_on_time=DB.loans.filter(l=>l.status==='returned' && l.return_date<=l.due_date).length;
+    return ok({genre_demand, monthly, req_status, top_requested, fine_collected, returns_on_time});
+  }
+
+  // ── SETTINGS ──
+  if(p==='/settings' && method==='GET') return ok({...DB.settings});
+  if(p==='/settings' && method==='POST'){
+    Object.entries(body).forEach(([k,v])=>{ DB.settings[k]=String(v); });
+    persist();
+    return ok({ok:true});
+  }
+
+  // ── ADMIN CHANGE PASSWORD ──
+  if(p==='/admin/change-password' && method==='POST'){
+    const adm=DB.admins.find(a=>a.username===body.username && a.password===hashPw(body.current_password||''));
+    if(!adm) err('Current password incorrect',401);
+    adm.password=hashPw(body.new_password);
+    persist();
+    return ok({ok:true});
+  }
+
+  err('Not found: '+method+' '+p,404);
+}
+
+// ════════════════════════════════
+//  API (routes through in-browser mock backend, no server needed)
+// ════════════════════════════════
+let ROLE=null, CU={};
+let trendInst,genreInst,statusInst;
+const GC={'Technology':'#1a6b5a','Science':'#4a2d8e','Literature':'#b84020','History':'#c9893a','Fiction':'#1a4a8e','Self-Help':'#2a6b2a','Mathematics':'#6b4a00','Philosophy':'#4a0000','Biography':'#004a4a'};
+const GE={'Technology':'💻','Science':'🔬','Literature':'📜','History':'🏛','Fiction':'🚀','Self-Help':'🌱','Mathematics':'∑','Philosophy':'🧠','Biography':'👤'};
+
+async function api(path, opts={}){
+  try{
+    return await mockApi(path, opts);
+  }catch(e){
+    notify(e.message,'e');
+    throw e;
+  }
+}
+const get=(p)=>api(p);
+const post=(p,d)=>api(p,{method:'POST',body:JSON.stringify(d)});
+const put=(p,d)=>api(p,{method:'PUT',body:JSON.stringify(d)});
+const del=(p)=>api(p,{method:'DELETE'});
+
+// ════════════════════════════════
+//  HELPERS
+// ════════════════════════════════
+function notify(msg,type='s'){
+  const el=document.getElementById('notif');
+  el.className='notif nt-'+type;
+  el.innerHTML=(type==='s'?'✓ ':type==='e'?'✕ ':'ℹ ')+msg;
+  el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'),3500);
+}
+function om(id){document.getElementById(id).classList.add('on');}
+function cm(id){document.getElementById(id).classList.remove('on');}
+function stars(r){return'★'.repeat(Math.round(r))+'☆'.repeat(5-Math.round(r));}
+function dL(d){return Math.ceil((new Date(d)-new Date())/864e5);}
+function addDays(n){const d=new Date();d.setDate(d.getDate()+n);return d.toISOString().split('T')[0];}
+function fmt(d){return d?new Date(d).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}):'—';}
+function debounce(fn,ms){let t;return(...a)=>{clearTimeout(t);t=setTimeout(()=>fn(...a),ms);}}
+
+// ════════════════════════════════
+//  GATE
+// ════════════════════════════════
+function showGate(w){
+  document.getElementById('gc').style.display=w==='choose'?'block':'none';
+  document.getElementById('gf-student').style.display=w==='student'?'block':'none';
+  document.getElementById('gf-admin').style.display=w==='admin'?'block':'none';
+}
+
+function switchTab(t){
+  document.getElementById('s-login').style.display=t==='login'?'block':'none';
+  document.getElementById('s-reg').style.display=t==='register'?'block':'none';
+  document.querySelectorAll('.g-tab').forEach((b,i)=>{b.classList.toggle('on',(i===0&&t==='login')||(i===1&&t==='register'));});
+}
+
+async function sLogin(){
+  const id=document.getElementById('sl-id').value.trim();
+  const pw=document.getElementById('sl-pw').value;
+  if(!id||!pw){showErr('sl-err','Fill all fields');return;}
+  try{
+    const r=await post('/student/login',{member_id:id,password:pw});
+    CU=r.student; startApp('student');
+  }catch(e){showErr('sl-err',e.message);}
+}
+
+async function sRegister(){
+  const name=document.getElementById('sr-name').value.trim();
+  const id=document.getElementById('sr-id').value.trim();
+  const pw=document.getElementById('sr-pw').value;
+  if(!name||!id||!pw){showErr('sr-err','Name, ID and Password required');return;}
+  if(pw.length<6){showErr('sr-err','Password must be at least 6 characters');return;}
+  try{
+    await post('/student/register',{name,member_id:id,email:document.getElementById('sr-email').value,phone:document.getElementById('sr-phone').value,department:document.getElementById('sr-dept').value,year:document.getElementById('sr-year').value,password:pw});
+    notify('Account created! Please login.','s');
+    switchTab('login');
+    document.getElementById('sl-id').value=id;
+  }catch(e){showErr('sr-err',e.message);}
+}
+
+async function aLogin(){
+  const u=document.getElementById('al-u').value.trim();
+  const p=document.getElementById('al-p').value;
+  if(!u||!p){showErr('al-err','Enter username and password');return;}
+  try{
+    const r=await post('/admin/login',{username:u,password:p});
+    CU=r.admin; startApp('admin');
+  }catch(e){showErr('al-err',e.message||'Invalid credentials');}
+}
+
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',3000);}
+
+function startApp(role){
+  ROLE=role;
+  document.getElementById('gate').classList.add('off');
+  document.getElementById('app').classList.add('on');
+  const rb=document.getElementById('rb');
+  rb.textContent=role==='admin'?'ADMIN':'STUDENT';
+  rb.className='sb-rbadge '+(role==='admin'?'rb-a':'rb-s');
+  document.getElementById('sb-av').textContent=CU.name[0].toUpperCase();
+  document.getElementById('sb-av').style.background=role==='admin'?'var(--gold)':'var(--gold-l)';
+  document.getElementById('sb-av').style.color=role==='admin'?'#fff':'var(--gold-d)';
+  document.getElementById('sb-name').textContent=(CU.name||'').split(' ')[0];
+  document.getElementById('sb-sub').textContent=role==='admin'?'Library Admin':(CU.department||'Student');
+  buildSidebar(role);
+  document.getElementById('tb-add').style.display=role==='admin'?'inline-flex':'none';
+  document.getElementById('tb-nb').style.display=role==='student'?'inline':'none';
+  sp(role==='admin'?'a-dash':'s-home');
+  if(role==='admin') setInterval(pollPending,5000);
+  else setInterval(checkStudentNotifs,5000);
+}
+
+function logout(){
+  ROLE=null;CU={};
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('gate').classList.remove('off');
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  showGate('choose');
+  [trendInst,genreInst,statusInst].forEach(c=>{try{c&&c.destroy()}catch{}});
+}
+
+function buildSidebar(role){
+  const n=document.getElementById('sb-nav');
+  if(role==='student'){
+    n.innerHTML=`
+      <div class="sb-sec">Library</div>
+      <div class="sbi on" onclick="sp('s-home',this)"><span class="ic">🏠</span>Home</div>
+      <div class="sbi" onclick="sp('s-browse',this)"><span class="ic">📖</span>Browse Books</div>
+      <div class="sbi" onclick="sp('s-ai',this)"><span class="ic">🤖</span>AI Search</div>
+      <div class="sbi" onclick="sp('s-myloans',this)"><span class="ic">📋</span>My Loans &amp; Requests<span class="sb-badge" id="my-badge" style="display:none">!</span></div>`;
+  } else {
+    n.innerHTML=`
+      <div class="sb-sec">Overview</div>
+      <div class="sbi on" onclick="sp('a-dash',this)"><span class="ic">🏠</span>Dashboard</div>
+      <div class="sb-sec">Requests &amp; Loans</div>
+      <div class="sbi" onclick="sp('a-requests',this)"><span class="ic">📨</span>Book Requests<span class="sb-badge" id="a-pbadge" style="display:none">0</span></div>
+      <div class="sbi" onclick="sp('a-loans',this)"><span class="ic">🔄</span>Active Loans</div>
+      <div class="sb-sec">Library</div>
+      <div class="sbi" onclick="sp('a-books',this)"><span class="ic">📖</span>Books Catalog</div>
+      <div class="sbi" onclick="sp('a-members',this)"><span class="ic">👥</span>Members</div>
+      <div class="sb-sec">Insights</div>
+      <div class="sbi" onclick="sp('a-analytics',this)"><span class="ic">📊</span>Analytics</div>
+      <div class="sbi" onclick="sp('a-reports',this)"><span class="ic">📋</span>Reports</div>
+      <div class="sb-sec">System</div>
+      <div class="sbi" onclick="sp('a-settings',this)"><span class="ic">⚙️</span>Settings</div>`;
+  }
+}
+
+const TITLES={'s-home':'Home','s-browse':'Browse Books','s-ai':'AI Search','s-myloans':'My Loans','a-dash':'Dashboard','a-requests':'Book Requests','a-loans':'Active Loans','a-books':'Books Catalog','a-members':'Members','a-analytics':'Analytics','a-reports':'Reports','a-settings':'Settings'};
+
+function sp(name,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sbi').forEach(i=>i.classList.remove('on'));
+  const pg=document.getElementById('p-'+name);if(pg)pg.classList.add('on');
+  if(el)el.classList.add('on');
+  else document.querySelectorAll('.sbi').forEach(i=>{if(i.getAttribute('onclick')?.includes(`'${name}'`))i.classList.add('on');});
+  document.getElementById('tb-title').textContent=TITLES[name]||name;
+  const rmap={'s-home':renderSHome,'s-browse':renderSBrowse,'s-myloans':()=>switchLoanTab('active',null),'a-dash':renderADash,'a-requests':renderAReqs,'a-loans':renderALoans,'a-books':renderABooks,'a-members':renderAMembers,'a-analytics':renderAAnalytics,'a-reports':renderAQuickSummary,'a-settings':loadSettings};
+  if(rmap[name]) rmap[name]();
+}
+
+function reload(){sp(document.querySelector('.page.on')?.id?.replace('p-',''),null);}
+function goNotif(){ROLE==='admin'?sp('a-requests'):sp('s-myloans');}
+function gSearch(){const q=document.getElementById('tb-search').value.trim();if(!q)return;if(ROLE==='student'){sp('s-browse');document.getElementById('s-bq').value=q;renderSBrowse();}else{sp('a-books');document.getElementById('a-bq').value=q;renderABooks();}document.getElementById('tb-search').value='';}
+
+// ════════════════════════════════
+//  BOOK CARD
+// ════════════════════════════════
+function bookCard(b, isAdmin=false){
+  const col=GC[b.genre]||'#555', em=GE[b.genre]||'📚';
+  const pip=b.available>0?`<span class="ap ap-y">${b.available} free</span>`:`<span class="ap ap-n">All Loaned</span>`;
+  const btns=isAdmin
+    ?`<button class="btn btn-outline btn-sm" style="flex:1" onclick="editBook(${b.id})">Edit</button><button class="btn btn-danger btn-sm" onclick="delBook(${b.id})">✕</button>`
+    :`<button class="btn btn-outline btn-sm" style="flex:1" onclick="openDetail(${b.id})">Details</button>${b.available>0?`<button class="btn btn-gold btn-sm" style="flex:1" onclick="openReq(${b.id})">Request</button>`:`<button class="btn btn-sm btn-outline" style="flex:1;cursor:default;opacity:.5">Unavailable</button>`}`;
+  return`<div class="bk"><div class="bc" style="background:${col}18">${em}${pip}</div><div class="bb"><h4>${b.title}</h4><div class="au">${b.author}</div><div class="bm"><span class="gt">${b.genre}</span><span class="ss">${stars(b.rating||4)}</span></div><div style="display:flex;gap:4px;margin-top:7px">${btns}</div></div></div>`;
+}
+
+// ════════════════════════════════
+//  STUDENT: HOME
+// ════════════════════════════════
+async function renderSHome(){
+  const [dash,popular]=await Promise.all([get('/dashboard'),get('/books?q=')]);
+  document.getElementById('s-stats').innerHTML=`
+    <div class="sc"><div class="si2" style="background:var(--gold-l)">📚</div><div><div class="sn">${dash.total_books}</div><div class="sl">Total Books</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--green-l)">✅</div><div><div class="sn">${dash.available_books}</div><div class="sl">Available Now</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--teal-l)">🏷️</div><div><div class="sn">${dash.genre_dist.length}</div><div class="sl">Genres</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--blue-l)">🔄</div><div><div class="sn">${dash.total_requests}</div><div class="sl">Total Requests</div></div></div>`;
+  const sorted=popular.sort((a,b)=>b.borrow_count-a.borrow_count).slice(0,8);
+  document.getElementById('s-popular').innerHTML=sorted.map(b=>bookCard(b)).join('')||'<div class="empty">No books yet</div>';
+}
+
+// ════════════════════════════════
+//  STUDENT: BROWSE
+// ════════════════════════════════
+async function renderSBrowse(){
+  const q=document.getElementById('s-bq')?.value||'';
+  const g=document.getElementById('s-bg')?.value||'';
+  const a=document.getElementById('s-ba')?.value||'';
+  const books=await get(`/books?q=${encodeURIComponent(q)}&genre=${g}&available=${a}`);
+  document.getElementById('s-browse-count').textContent=`${books.length} books found`;
+  document.getElementById('s-browse-grid').innerHTML=books.map(b=>bookCard(b)).join('')||'<div class="empty"><div class="big">📭</div>No books found</div>';
+}
+
+// ════════════════════════════════
+//  STUDENT: DETAIL
+// ════════════════════════════════
+async function openDetail(id){
+  const b=await get('/books/'+id);
+  const col=GC[b.genre]||'#555',em=GE[b.genre]||'📚';
+  document.getElementById('m-detail-content').innerHTML=`
+    <div style="display:flex;gap:1.2rem;align-items:flex-start;margin-bottom:1.2rem;flex-wrap:wrap">
+      <div style="width:90px;height:125px;border-radius:10px;background:${col}18;display:flex;align-items:center;justify-content:center;font-size:2.4rem;flex-shrink:0">${em}</div>
+      <div style="flex:1">
+        <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700;margin-bottom:4px">${b.title}</div>
+        <div style="font-size:.86rem;color:rgba(15,14,26,.5);margin-bottom:8px">by ${b.author}${b.year?' · '+b.year:''}</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;margin-bottom:7px">
+          <span class="bd" style="background:var(--cream2);color:rgba(15,14,26,.6)">${b.genre}</span>
+          <span class="bd ${b.available>0?'b-av':'b-lo'}">${b.available>0?b.available+' copies free':'All copies on loan'}</span>
+        </div>
+        <div style="color:var(--gold);font-size:.82rem;margin-bottom:6px">${stars(b.rating||4)} ${(b.rating||4).toFixed(1)}</div>
+        <div style="font-size:.8rem;color:rgba(15,14,26,.45)">Publisher: ${b.publisher||'—'} &nbsp;·&nbsp; Shelf: <strong>${b.shelf||'—'}</strong> &nbsp;·&nbsp; Borrowed ${b.borrow_count||0} times</div>
+        ${b.isbn?`<div style="font-size:.78rem;color:rgba(15,14,26,.38);margin-top:3px">ISBN: ${b.isbn}</div>`:''}
+        ${b.tags?`<div style="margin-top:7px">${b.tags.split(',').filter(Boolean).map(t=>`<span class="tag">${t.trim()}</span>`).join('')}</div>`:''}
+      </div>
+    </div>
+    ${b.description?`<p style="font-size:.87rem;color:rgba(15,14,26,.55);margin-bottom:1.1rem;line-height:1.65">${b.description}</p>`:''}
+    ${b.available>0
+      ?`<button class="btn btn-gold" style="width:100%" onclick="cm('m-detail');openReq(${b.id})">📋 Request This Book →</button>`
+      :`<div style="text-align:center;padding:.65rem;background:var(--rust-l);border-radius:9px;color:var(--rust);font-size:.85rem">⚠️ All copies are currently on loan. Check back later or contact the librarian.</div>`}`;
+  om('m-detail');
+}
+
+// ════════════════════════════════
+//  STUDENT: REQUEST
+// ════════════════════════════════
+async function openReq(id){
+  const b=await get('/books/'+id);
+  if(b.available<1){notify('No copies available right now','e');return;}
+  document.getElementById('rq-title').textContent=b.title;
+  document.getElementById('rq-author').textContent='by '+b.author;
+  document.getElementById('rq-emoji').textContent=GE[b.genre]||'📖';
+  document.getElementById('rq-name').value=CU.name;
+  document.getElementById('rq-mid').value=CU.member_id||CU.id||'';
+  document.getElementById('rq-bid').value=id;
+  document.getElementById('rq-date').value=new Date().toISOString().split('T')[0];
+  document.getElementById('rq-note').value='';
+  om('m-req');
+}
+
+async function submitReq(){
+  const bookId=parseInt(document.getElementById('rq-bid').value);
+  try{
+    await post('/requests',{book_id:bookId,member_id:CU.member_id||CU.id,member_name:CU.name,department:CU.department||'',preferred_date:document.getElementById('rq-date').value,note:document.getElementById('rq-note').value});
+    cm('m-req');
+    notify('Request sent! Admin will review it shortly 📨','s');
+    renderSHome();
+  }catch(e){}
+}
+
+// ════════════════════════════════
+//  STUDENT: MY LOANS
+// ════════════════════════════════
+let loanTab='active';
+function switchLoanTab(tab, btn){
+  loanTab=tab;
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('on'));
+  if(btn)btn.classList.add('on');
+  else document.querySelectorAll('.tab-btn').forEach((b,i)=>{b.classList.toggle('on',['active','requests','history'][i]===tab);});
+  renderLoanTab();
+}
+
+async function renderLoanTab(){
+  const mid=CU.member_id||CU.id||'';
+  const el=document.getElementById('s-loans-content');
+  el.innerHTML='<div class="empty" style="padding:1rem">Loading…</div>';
+
+  if(loanTab==='active'){
+    const loans=await get(`/loans?member_id=${mid}`);
+    const active=loans.filter(l=>l.status==='active'||l.status==='overdue');
+    if(!active.length){el.innerHTML='<div class="empty"><div class="big">📚</div>No active loans. Browse books and make a request!</div>';return;}
+    el.innerHTML=active.map(l=>{
+      const dl=dL(l.due_date);
+      const isOv=dl<0;
+      const fine=isOv?Math.abs(dl)*2:0;
+      return`<div class="rqc ${isOv?'rejected':''}">
+        <div class="rqt">
+          <div class="rqi" style="background:${(GC[l.genre]||'#555')}18">${GE[l.genre]||'📚'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:500;font-size:.93rem">${l.book_title}</div>
+            <div style="font-size:.76rem;color:rgba(15,14,26,.43)">${l.author} · Shelf: ${l.shelf||'—'}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:.2rem .75rem;margin-top:.45rem;font-size:.78rem;color:rgba(15,14,26,.55)">
+              <div>📅 Issued: ${fmt(l.issue_date)}</div>
+              <div>📅 Due: <strong style="color:${isOv?'var(--rust)':dl<=3?'var(--gold)':'inherit'}">${fmt(l.due_date)}</strong></div>
+              <div>🔄 Renewals: ${l.renewals||0}/2</div>
+              <div>${isOv?`<span style="color:var(--rust);font-weight:600">⚠️ ${Math.abs(dl)} days overdue · ₹${fine} fine</span>`:`<span style="color:${dl<=3?'var(--gold)':'var(--teal)'}">⏱ ${dl} days left</span>`}</div>
+            </div>
+            ${dl<=3&&!isOv?`<div class="due-warn">⚠️ Due soon! Return or renew before ${fmt(l.due_date)} to avoid fines.</div>`:''}
+            ${isOv?`<div class="due-warn" style="background:var(--rust-l);border-color:rgba(184,64,32,.3);color:var(--rust)">⚠️ Overdue by ${Math.abs(dl)} days. Fine: ₹${fine}. Please return immediately!</div>`:''}
+          </div>
+        </div>
+        <div class="rqa">
+          <button class="btn btn-teal btn-sm" onclick="openReturn(${l.id},'${l.book_title.replace(/'/g,"\\'")}',${isOv},${fine})">📤 Return Book</button>
+          ${l.renewals<2&&!isOv?`<button class="btn btn-purple btn-sm" onclick="openRenew(${l.id},'${l.book_title.replace(/'/g,"\\'")}','${l.due_date}',${l.renewals||0})">🔄 Renew</button>`:''}
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  else if(loanTab==='requests'){
+    const reqs=await get('/requests');
+    const mine=reqs.filter(r=>r.member_id===(CU.member_id||CU.id));
+    if(!mine.length){el.innerHTML='<div class="empty"><div class="big">📋</div>No requests yet. Browse and request books!</div>';return;}
+    const si={pending:{cls:'b-p',lbl:'⏳ Pending',msg:'Waiting for admin approval'},approved:{cls:'b-a',lbl:'✅ Approved',msg:'Approved! Collect from library.'},rejected:{cls:'b-r',lbl:'❌ Rejected',msg:'Not approved. Contact librarian.'}};
+    el.innerHTML=mine.reverse().map(r=>{
+      const s=si[r.status]||si.pending;
+      return`<div class="rqc ${r.status}">
+        <div class="rqt">
+          <div class="rqi" style="background:${(GC[r.genre]||'#555')}18">${GE[r.genre]||'📚'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap"><div style="font-weight:500">${r.book_title}</div><span class="bd ${s.cls}">${s.lbl}</span></div>
+            <div style="font-size:.76rem;color:rgba(15,14,26,.43)">by ${r.author}</div>
+            <div style="font-size:.76rem;color:rgba(15,14,26,.38);margin-top:3px">${s.msg}</div>
+            ${r.admin_note?`<div style="font-size:.75rem;color:var(--teal);margin-top:2px">📝 Admin: ${r.admin_note}</div>`:''}
+            <div style="font-size:.7rem;color:rgba(15,14,26,.27);margin-top:2px">${fmt(r.created_at)}</div>
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  else if(loanTab==='history'){
+    const loans=await get(`/loans?member_id=${mid}`);
+    const hist=loans.filter(l=>l.status==='returned');
+    if(!hist.length){el.innerHTML='<div class="empty"><div class="big">📜</div>No return history yet</div>';return;}
+    el.innerHTML=`<div class="tw"><table><thead><tr><th>#</th><th>Book</th><th>Issued</th><th>Due</th><th>Returned</th><th>Fine Paid</th></tr></thead><tbody>${hist.map((l,i)=>`<tr><td>${i+1}</td><td><strong>${l.book_title}</strong><div style="font-size:.74rem;color:rgba(15,14,26,.42)">${l.author}</div></td><td>${fmt(l.issue_date)}</td><td>${fmt(l.due_date)}</td><td style="color:var(--teal)">${fmt(l.return_date)}</td><td>${l.fine>0?`<span style="color:var(--rust);font-weight:600">₹${l.fine}</span>`:'<span style="color:var(--green)">₹0</span>'}</td></tr>`).join('')}</tbody></table></div>`;
+  }
+}
+
+// ════════════════════════════════
+//  STUDENT: RETURN
+// ════════════════════════════════
+function openReturn(lid, title, isOv, fine){
+  document.getElementById('ret-lid').value=lid;
+  document.getElementById('m-return-content').innerHTML=`
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="font-size:2rem;margin-bottom:.35rem">📤</div>
+      <div style="font-weight:500;font-size:.95rem">${title}</div>
+      <div style="font-size:.82rem;color:rgba(15,14,26,.45);margin-top:.25rem">Confirm you are returning this book</div>
+    </div>
+    ${isOv?`<div class="fine-box"><div class="fa">₹${fine} Fine</div><small>This book is overdue. Fine will be recorded.</small></div>`:'<div style="text-align:center;padding:.65rem;background:var(--green-l);border-radius:9px;color:var(--green);font-size:.85rem">✅ On time return — No fine!</div>'}`;
+  om('m-return');
+}
+async function doReturn(){
+  const lid=document.getElementById('ret-lid').value;
+  const r=await post(`/loans/${lid}/return`,{});
+  cm('m-return');
+  if(r.fine>0) notify(`Book returned. Fine recorded: ₹${r.fine}. Please pay at counter.`,'i');
+  else notify('Book returned successfully! Thank you.','s');
+  switchLoanTab('active',null);
+}
+
+// ════════════════════════════════
+//  STUDENT: RENEW
+// ════════════════════════════════
+function openRenew(lid, title, due, renewals){
+  document.getElementById('ren-lid').value=lid;
+  const newDue=addDays(14);
+  document.getElementById('m-renew-content').innerHTML=`
+    <div style="text-align:center;margin-bottom:1rem">
+      <div style="font-size:2rem;margin-bottom:.35rem">🔄</div>
+      <div style="font-weight:500;font-size:.95rem">${title}</div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;font-size:.85rem;background:var(--cream2);border-radius:10px;padding:.85rem;margin-bottom:.85rem">
+      <div><div style="color:rgba(15,14,26,.45);font-size:.75rem">Current Due Date</div><div style="font-weight:500;color:var(--rust)">${fmt(due)}</div></div>
+      <div><div style="color:rgba(15,14,26,.45);font-size:.75rem">New Due Date</div><div style="font-weight:500;color:var(--teal)">${fmt(newDue)}</div></div>
+      <div><div style="color:rgba(15,14,26,.45);font-size:.75rem">Renewals Used</div><div style="font-weight:500">${renewals}/2</div></div>
+      <div><div style="color:rgba(15,14,26,.45);font-size:.75rem">Renewals Left</div><div style="font-weight:500">${2-renewals}</div></div>
+    </div>
+    <div style="font-size:.8rem;color:rgba(15,14,26,.45);text-align:center">Renewal extends your loan by 14 days. Max 2 renewals per loan.</div>`;
+  om('m-renew');
+}
+async function doRenew(){
+  const lid=document.getElementById('ren-lid').value;
+  const r=await post(`/loans/${lid}/renew`,{});
+  cm('m-renew');
+  notify(`Loan renewed! New due date: ${fmt(r.new_due)}`,'s');
+  switchLoanTab('active',null);
+}
+
+function checkStudentNotifs(){
+  // Check for approved/rejected requests
+}
+
+// ════════════════════════════════
+//  STUDENT: AI CHAT
+// ════════════════════════════════
+const KB={
+  'machine learning':'Machine Learning (ML) is a branch of AI where algorithms learn patterns from data automatically. Key types: ① Supervised Learning — learns from labeled data (Linear Regression, SVM, Decision Trees, Random Forest). ② Unsupervised Learning — finds patterns without labels (K-Means Clustering, PCA). ③ Reinforcement Learning — learns from rewards/penalties. Used in: spam detection, Netflix recommendations, fraud detection, image recognition.',
+  'deep learning':'Deep Learning uses multi-layered neural networks (deep neural networks) to learn complex hierarchical representations. Key architectures: CNN (Convolutional Neural Networks — images), RNN/LSTM (sequences, text, time series), Transformers (language — basis of ChatGPT, BERT). Applications: image recognition, speech recognition, machine translation, autonomous driving. Requires large datasets and GPU computation.',
+  'artificial intelligence':'Artificial Intelligence (AI) is the simulation of human intelligence in machines. Branches: Machine Learning, Deep Learning, Natural Language Processing (NLP), Computer Vision, Robotics, Expert Systems, Planning. Historical milestones: Turing Test (1950), Expert Systems (1980s), Deep Blue (1997), Deep Learning revolution (2012), ChatGPT (2022). AI is classified as Narrow AI (specific tasks) vs AGI (human-level general intelligence — not yet achieved).',
+  'cloud computing':'Cloud Computing delivers computing resources over the internet. Service models: IaaS (Infrastructure — AWS EC2, Azure VMs), PaaS (Platform — Google App Engine, Heroku), SaaS (Software — Gmail, Office 365). Deployment: Public (AWS/Azure/GCP), Private (on-premise), Hybrid. Benefits: scalability, pay-per-use, global availability. AI on cloud: AWS SageMaker, Azure ML, Google Vertex AI allow training large models without owning hardware.',
+  'big data':'Big Data refers to datasets too large/complex for traditional software to handle. The 5 Vs: Volume (petabytes), Velocity (real-time), Variety (structured/unstructured), Veracity (accuracy), Value (insights). Tools: Hadoop (HDFS distributed storage + MapReduce), Apache Spark (100x faster than MapReduce), Kafka (streaming), Hive (SQL queries on Hadoop), HBase (NoSQL on HDFS). Applications: social media analytics, IoT sensor data, genomics, financial trading.',
+  'data structures':'Data Structures organise data for efficient access and modification. Key types: Arrays (O(1) access), Linked Lists (O(n) access, O(1) insert), Stacks (LIFO — function calls, undo), Queues (FIFO — scheduling), Trees (BST O(log n), AVL self-balancing), Graphs (networks — Dijkstra, BFS/DFS), Hash Tables (O(1) average lookup — Python dicts). Each has different time/space complexity. Choosing the right data structure is crucial for algorithm performance.',
+  'neural network':'Neural Networks are computing systems inspired by biological neurons. Structure: Input layer → Hidden layers (feature extraction) → Output layer. Each neuron applies: output = activation(weights·inputs + bias). Training uses: Forward Propagation (compute output), Loss calculation, Backpropagation (compute gradients), Gradient Descent (update weights). Activation functions: ReLU (hidden layers), Sigmoid/Softmax (output). Types: Feedforward (basic), CNN (spatial), RNN/LSTM (sequential), Transformer (attention-based).',
+  'python':'Python is a high-level interpreted language created by Guido van Rossum (1991). Features: simple syntax, dynamic typing, extensive library ecosystem. Key domains: Data Science (NumPy, Pandas, Matplotlib), Machine Learning (Scikit-learn, TensorFlow, PyTorch, Keras), Web Dev (Django, Flask, FastAPI), Automation/Scripting. Python is #1 most popular language (TIOBE 2024) due to readability and versatility. Interpreted (CPython) but can be compiled (Cython, PyPy) for performance.',
+  'algorithms':'An Algorithm is a finite sequence of well-defined instructions to solve a problem. Categories: Sorting — Bubble O(n²), Merge O(n log n), Quick O(n log n) avg, Heap O(n log n). Searching — Linear O(n), Binary O(log n). Graph — BFS/DFS O(V+E), Dijkstra O(V²), Bellman-Ford O(VE). Dynamic Programming — Fibonacci, Knapsack, LCS. Greedy — Kruskal, Prim (MST), Huffman coding. Complexity analysis uses Big-O notation for worst-case, Ω for best-case, Θ for average.',
+};
+
+async function aiReply(msg){
+  const lower=msg.toLowerCase();
+  const kk=Object.keys(KB).find(k=>lower.includes(k));
+  if(lower.match(/what is|explain|tell me|define|how does|describe/) && kk){addMsg(KB[kk],'ai');return;}
+  if(kk&&!lower.match(/book|find|recommend|show/)){addMsg(KB[kk],'ai');return;}
+
+  let books=[],reply='';
+  try{
+    if(lower.match(/available|free/)) {books=await get('/books?available=1');reply='Currently <strong>available books</strong>:';}
+    else if(lower.match(/top|best|popular|rated/)){books=await get('/books');books.sort((a,b)=>b.rating-a.rating);reply='Our <strong>top-rated books</strong>:';}
+    else if(lower.match(/fiction|novel/)){books=await get('/books?genre=Fiction');reply='<strong>Fiction books</strong>:';}
+    else if(lower.match(/science/)){books=await get('/books?genre=Science');reply='<strong>Science books</strong>:';}
+    else if(lower.match(/history/)){books=await get('/books?genre=History');reply='<strong>History books</strong>:';}
+    else if(lower.match(/self.help|motivation|habit/)){books=await get('/books?genre=Self-Help');reply='<strong>Self-Help books</strong>:';}
+    else if(lower.match(/technology|ai|machine learning|python|programming|data|algorithm|computer/)){books=await get('/books?genre=Technology');reply='<strong>Technology & AI books</strong>:';}
+    else if(lower.match(/biography|autobiography/)){books=await get('/books?genre=Biography');reply='<strong>Biography books</strong>:';}
+    else if(lower.match(/philosophy/)){books=await get('/books?genre=Philosophy');reply='<strong>Philosophy books</strong>:';}
+    else if(lower.match(/maths|math|calculus|algebra|statistics/)){books=await get('/books?genre=Mathematics');reply='<strong>Mathematics books</strong>:';}
+    else{books=await get(`/books?q=${encodeURIComponent(lower)}`);reply=books.length?`Results for "<em>${msg}</em>":`:''}
+  }catch{}
+
+  if(!books.length&&!reply){addMsg(`I couldn't find info on that. Try: <em>machine learning, deep learning, Python, cloud, big data, algorithms, data structures, neural networks</em> — or ask for a specific genre!`,'ai');return;}
+  if(!books.length){addMsg('No books matched that query. Try a different keyword!','ai');return;}
+
+  const top=books.slice(0,4);
+  const cards=top.map(b=>`<div style="background:var(--cream2);border-radius:8px;padding:7px 10px;margin-top:5px;display:flex;gap:8px;align-items:center"><div>${GE[b.genre]||'📚'}</div><div style="flex:1;min-width:0"><div style="font-size:.85rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${b.title}</div><div style="font-size:.72rem;color:rgba(15,14,26,.43)">${b.author} · ${b.available>0?'<span style="color:#2a6b2a">Available</span>':'<span style="color:#b84020">On Loan</span>'} · ${stars(b.rating||4)}</div></div><button class="btn btn-gold btn-sm" onclick="cm('m-detail');openReq(${b.id})" style="flex-shrink:0">Req</button></div>`).join('');
+  addMsg(reply+cards,'ai');
+}
+
+function addMsg(msg,who){
+  const el=document.getElementById('chat-msgs');
+  const d=document.createElement('div');d.className='cbr'+(who==='user'?' usr':'');
+  d.innerHTML=`<div class="cav ${who==='user'?'cu':'cai'}">${who==='user'?CU.name[0].toUpperCase():'AI'}</div><div class="cb cb-${who==='user'?'u':'ai'}">${msg}</div>`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+function sendChat(){const i=document.getElementById('chat-in');const m=i.value.trim();if(!m)return;addMsg(m,'user');i.value='';setTimeout(()=>aiReply(m),350);}
+function qc(m){addMsg(m,'user');setTimeout(()=>aiReply(m),300);}
+
+// ════════════════════════════════
+//  ADMIN: DASHBOARD
+// ════════════════════════════════
+async function renderADash(){
+  document.getElementById('a-dash-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const dash=await get('/dashboard');
+  document.getElementById('a-stats').innerHTML=`
+    <div class="sc"><div class="si2" style="background:var(--gold-l)">📚</div><div><div class="sn">${dash.total_books}</div><div class="sl">Total Books</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--green-l)">✅</div><div><div class="sn">${dash.available_books}</div><div class="sl">Available</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--blue-l)">👥</div><div><div class="sn">${dash.total_members}</div><div class="sl">Members</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--rust-l)">📨</div><div><div class="sn">${dash.pending_reqs}</div><div class="sl">Pending Requests</div><div class="st sd">${dash.pending_reqs>0?'Needs action':''}</div></div></div>`;
+
+  // Charts
+  if(trendInst)trendInst.destroy();
+  const ctx=document.getElementById('trend-chart').getContext('2d');
+  const an=await get('/analytics');
+  trendInst=new Chart(ctx,{type:'line',data:{labels:an.monthly.map(m=>m.month),datasets:[{label:'Borrows',data:an.monthly.map(m=>m.count),borderColor:'#c9893a',backgroundColor:'rgba(201,137,58,0.09)',tension:.4,fill:true,pointBackgroundColor:'#c9893a',pointRadius:4}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+
+  if(genreInst)genreInst.destroy();
+  const gc=document.getElementById('genre-chart').getContext('2d');
+  genreInst=new Chart(gc,{type:'doughnut',data:{labels:dash.genre_dist.map(d=>d.genre),datasets:[{data:dash.genre_dist.map(d=>d.cnt),backgroundColor:['#c9893a','#1a6b5a','#4a2d8e','#b84020','#1a4a8e','#2a6b2a','#6b4a00','#4a0000','#004a4a'],borderWidth:2,borderColor:'#fff'}]},options:{responsive:true,plugins:{legend:{position:'right',labels:{font:{size:10},padding:8}}}}});
+
+  // Pending
+  const pend=dash.overdue_list?[]:(await get('/requests?status=pending'));
+  document.getElementById('a-pend-ct').textContent=dash.pending_reqs>0?`(${dash.pending_reqs})`:'';
+  const allPend=await get('/requests?status=pending');
+  document.getElementById('a-dash-pend').innerHTML=allPend.length?allPend.slice(0,4).map(r=>`
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div>${GE[r.genre]||'📚'}</div>
+      <div style="flex:1;min-width:0"><div style="font-size:.87rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${r.book_title}</div>
+      <div style="font-size:.72rem;color:rgba(15,14,26,.42)">${r.member_name} · ${r.member_id}</div></div>
+      <button class="btn btn-green btn-sm" onclick="openAct(${r.id},'approve')">✓</button>
+      <button class="btn btn-danger btn-sm" onclick="openAct(${r.id},'reject')">✕</button>
+    </div>`).join(''):'<div class="empty" style="padding:.85rem">✅ No pending requests</div>';
+
+  // Overdue
+  document.getElementById('a-dash-ov').innerHTML=dash.overdue_list.length?dash.overdue_list.slice(0,4).map(l=>`
+    <div style="display:flex;align-items:center;gap:9px;padding:7px 0;border-bottom:1px solid var(--border)">
+      <div>📖</div>
+      <div style="flex:1;min-width:0"><div style="font-size:.87rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.book_title}</div>
+      <div style="font-size:.72rem;color:rgba(15,14,26,.42)">${l.student_name} · Due: ${fmt(l.due_date)}</div></div>
+      <span style="color:var(--rust);font-size:.75rem;font-weight:600">${Math.abs(dL(l.due_date))}d late</span>
+    </div>`).join(''):'<div class="empty" style="padding:.85rem">✅ No overdue books</div>';
+
+  // Top books
+  document.getElementById('a-top-books').innerHTML=`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.75rem">${dash.top_books.map((b,i)=>`<div style="display:flex;align-items:center;gap:.6rem;padding:.65rem;background:var(--cream2);border-radius:9px"><div style="font-size:1.1rem;font-weight:700;color:var(--gold);width:18px">${i+1}</div><div style="flex:1;min-width:0"><div style="font-size:.83rem;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.title}</div><div style="font-size:.72rem;color:rgba(15,14,26,.42)">${b.borrow_count} borrows</div></div></div>`).join('')}</div>`;
+
+  updateAdminBadge(dash.pending_reqs);
+}
+
+async function pollPending(){
+  try{
+    const r=await get('/requests?status=pending');
+    updateAdminBadge(r.length);
+  }catch{}
+}
+function updateAdminBadge(c){
+  const b=document.getElementById('a-pbadge');
+  const f=document.getElementById('tb-flash');
+  if(b){b.textContent=c;b.style.display=c>0?'inline':'none';}
+  if(f){f.textContent=`📨 ${c}`;f.style.display=c>0?'inline':'none';}
+}
+
+// ════════════════════════════════
+//  ADMIN: REQUESTS
+// ════════════════════════════════
+async function renderAReqs(){
+  const f=document.getElementById('a-req-filter')?.value||'';
+  const reqs=await get('/requests'+(f?`?status=${f}`:''));
+  updateAdminBadge(reqs.filter(r=>r.status==='pending').length);
+  const el=document.getElementById('a-req-list');
+  if(!reqs.length){el.innerHTML='<div class="empty"><div class="big">📨</div>No requests found</div>';return;}
+  const sc={pending:'b-p',approved:'b-a',rejected:'b-r'};
+  el.innerHTML=reqs.map(r=>`
+    <div class="rqc ${r.status}">
+      <div class="rqt">
+        <div class="rqi" style="background:${(GC[r.genre]||'#555')}18">${GE[r.genre]||'📚'}</div>
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;align-items:center;gap:7px;flex-wrap:wrap">
+            <div style="font-weight:500">${r.book_title}</div>
+            <span class="bd ${sc[r.status]}">${r.status.charAt(0).toUpperCase()+r.status.slice(1)}</span>
+            ${r.book_available<1&&r.status==='pending'?`<span class="bd b-lo">No Copies!</span>`:''}
+          </div>
+          <div style="font-size:.76rem;color:rgba(15,14,26,.42)">by ${r.author}</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.2rem .65rem;margin-top:.4rem;font-size:.77rem;color:rgba(15,14,26,.52)">
+            <div>👤 <strong>${r.member_name}</strong></div><div>🎓 ${r.member_id} · ${r.department||'—'}</div>
+            <div>📅 ${fmt(r.created_at)}</div><div>📅 Preferred: ${fmt(r.preferred_date)}</div>
+            ${r.note?`<div style="grid-column:1/-1">💬 "${r.note}"</div>`:''}
+            ${r.admin_note?`<div style="grid-column:1/-1;color:var(--teal)">📝 Admin: ${r.admin_note}</div>`:''}
+          </div>
+        </div>
+      </div>
+      ${r.status==='pending'?`<div class="rqa"><button class="btn btn-green btn-sm" onclick="openAct(${r.id},'approve')">✓ Approve & Issue</button><button class="btn btn-danger btn-sm" onclick="openAct(${r.id},'reject')">✕ Reject</button></div>`:''}
+    </div>`).join('');
+}
+
+function openAct(id,type){
+  // We need the request data
+  get('/requests'+(type==='approve'?'?status=pending':'')).then(reqs=>{
+    const r=reqs.find(x=>x.id===id);
+    if(!r)return;
+    document.getElementById('m-act-title').textContent=type==='approve'?'Approve & Issue Book':'Reject Request';
+    document.getElementById('m-act-detail').innerHTML=`
+      <div style="font-weight:500">${r.book_title}</div>
+      <div style="color:rgba(15,14,26,.5);font-size:.84rem;margin-top:.25rem"><strong>${r.member_name}</strong> (${r.member_id}) · ${r.department}</div>
+      ${r.note?`<div style="color:rgba(15,14,26,.42);font-size:.78rem;margin-top:.25rem">Note: "${r.note}"</div>`:''}`;
+    document.getElementById('m-act-note').value='';
+    document.getElementById('m-act-id').value=id;
+    document.getElementById('m-act-type').value=type;
+    const today=new Date().toISOString().split('T')[0];
+    document.getElementById('m-act-issue').value=today;
+    document.getElementById('m-act-due').value=addDays(14);
+    document.getElementById('m-act-issue').parentElement.parentElement.style.display=type==='approve'?'grid':'none';
+    const btn=document.getElementById('m-act-btn');
+    btn.textContent=type==='approve'?'✓ Approve & Issue':'✕ Reject';
+    btn.className='btn btn-sm '+(type==='approve'?'btn-green':'btn-danger');
+    om('m-act');
+  });
+}
+
+async function confirmAct(){
+  const id=parseInt(document.getElementById('m-act-id').value);
+  const type=document.getElementById('m-act-type').value;
+  const note=document.getElementById('m-act-note').value.trim();
+  if(type==='approve'){
+    await post(`/requests/${id}/approve`,{admin_note:note,issue_date:document.getElementById('m-act-issue').value,due_date:document.getElementById('m-act-due').value});
+    notify('Request approved & book issued! ✓','s');
+  } else {
+    await post(`/requests/${id}/reject`,{admin_note:note});
+    notify('Request rejected.','i');
+  }
+  cm('m-act');renderAReqs();
+}
+
+// ════════════════════════════════
+//  ADMIN: LOANS
+// ════════════════════════════════
+async function renderALoans(){
+  const q=document.getElementById('a-loans-q')?.value||'';
+  const s=document.getElementById('a-loans-s')?.value||'';
+  const loans=await get('/loans'+(s?`?status=${s}`:''));
+  const filtered=loans.filter(l=>{
+    if(!q) return true;
+    return l.book_title.toLowerCase().includes(q.toLowerCase())||l.member_name.toLowerCase().includes(q.toLowerCase())||l.member_id.toLowerCase().includes(q.toLowerCase());
+  });
+  document.getElementById('a-loans-sub').textContent=`${filtered.length} records`;
+  document.getElementById('a-loans-table').innerHTML=filtered.map((l,i)=>{
+    const dl=dL(l.due_date);const isOv=l.status==='overdue';
+    const fine=isOv?Math.abs(dl)*2:0;
+    const sc=isOv?'b-ov':dl<=3?'b-p':'b-a';
+    const sl=isOv?'Overdue':dl<=3?'Due Soon':'Active';
+    return`<tr>
+      <td>${i+1}</td>
+      <td><strong>${l.book_title}</strong><div style="font-size:.72rem;color:rgba(15,14,26,.4)">${l.author}</div></td>
+      <td>${l.member_name}</td>
+      <td><code style="font-size:.75rem">${l.member_id}</code></td>
+      <td>${l.department||'—'}</td>
+      <td>${fmt(l.issue_date)}</td>
+      <td style="font-weight:500;color:${isOv?'var(--rust)':dl<=3?'var(--gold)':'inherit'}">${fmt(l.due_date)}</td>
+      <td><span style="font-weight:600;color:${isOv?'var(--rust)':dl<=3?'var(--gold)':'var(--green)'}">${isOv?Math.abs(dl)+'d late':dl+'d left'}</span></td>
+      <td>${l.renewals||0}/2</td>
+      <td><span class="bd ${sc}">${sl}</span></td>
+      <td>${fine>0?`<span style="color:var(--rust);font-weight:600">₹${fine}</span>`:'—'}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-teal btn-sm" onclick="openAdminReturn(${l.id},'${l.book_title.replace(/'/g,"\\'")}',${isOv},${fine})">Return</button>
+      </td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="12" class="empty">No loans found</td></tr>';
+}
+
+function openAdminReturn(lid,title,isOv,fine){
+  document.getElementById('aret-lid').value=lid;
+  document.getElementById('m-aret-content').innerHTML=`
+    <div style="font-weight:500;font-size:.95rem;margin-bottom:.35rem">${title}</div>
+    ${isOv?`<div class="fine-box"><div class="fa">₹${fine} Fine to collect</div><small>Book is overdue — collect fine from student</small></div>`:'<div style="padding:.65rem;background:var(--green-l);border-radius:9px;color:var(--green);font-size:.85rem;margin-top:.5rem">✅ Returned on time — No fine</div>'}`;
+  om('m-aret');
+}
+async function doAdminReturn(){
+  const lid=document.getElementById('aret-lid').value;
+  const r=await post(`/loans/${lid}/return`,{});
+  cm('m-aret');
+  notify(r.fine>0?`Returned. Fine: ₹${r.fine} collected`:'Book returned successfully!','s');
+  renderALoans();
+}
+
+// ════════════════════════════════
+//  ADMIN: BOOKS
+// ════════════════════════════════
+async function renderABooks(){
+  const q=document.getElementById('a-bq')?.value||'';
+  const g=document.getElementById('a-bg')?.value||'';
+  const books=await get(`/books?q=${encodeURIComponent(q)}&genre=${g}`);
+  document.getElementById('a-books-sub').textContent=`${books.length} books in catalog`;
+  document.getElementById('a-books-table').innerHTML=books.map((b,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><strong>${b.title}</strong><div style="font-size:.72rem;color:rgba(15,14,26,.38)">${b.description||''}</div></td>
+      <td>${b.author}</td>
+      <td><span class="tag">${b.genre}</span></td>
+      <td style="font-size:.78rem">${b.isbn||'—'}</td>
+      <td>${b.copies}</td>
+      <td><span class="bd ${b.available>0?'b-av':'b-lo'}">${b.available>0?b.available+' free':'Out'}</span></td>
+      <td><code style="font-size:.74rem">${b.shelf||'—'}</code></td>
+      <td>${(b.rating||4).toFixed(1)} <span style="color:var(--gold);font-size:.7rem">${stars(b.rating||4)}</span></td>
+      <td>${b.borrow_count||0}</td>
+      <td style="white-space:nowrap">
+        <button class="btn btn-outline btn-sm" onclick="editBook(${b.id})" style="margin-right:3px">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delBook(${b.id})">✕</button>
+      </td>
+    </tr>`).join('')||'<tr><td colspan="11" class="empty">No books found</td></tr>';
+}
+
+function openAddBook(){
+  document.getElementById('m-book-title').textContent='Add New Book';
+  ['b-title','b-author','b-isbn','b-pub','b-shelf','b-desc','b-tags'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('b-genre').value='';
+  document.getElementById('b-year').value='';
+  document.getElementById('b-copies').value='1';
+  document.getElementById('b-rating').value='4.0';
+  document.getElementById('b-id').value='';
+  om('m-book');
+}
+
+async function editBook(id){
+  const b=await get('/books/'+id);
+  document.getElementById('m-book-title').textContent='Edit Book';
+  document.getElementById('b-title').value=b.title;
+  document.getElementById('b-author').value=b.author;
+  document.getElementById('b-isbn').value=b.isbn||'';
+  document.getElementById('b-genre').value=b.genre||'';
+  document.getElementById('b-year').value=b.year||'';
+  document.getElementById('b-pub').value=b.publisher||'';
+  document.getElementById('b-copies').value=b.copies||1;
+  document.getElementById('b-desc').value=b.description||'';
+  document.getElementById('b-shelf').value=b.shelf||'';
+  document.getElementById('b-rating').value=b.rating||4;
+  document.getElementById('b-tags').value=b.tags||'';
+  document.getElementById('b-id').value=id;
+  om('m-book');
+}
+
+async function saveBook(){
+  const title=document.getElementById('b-title').value.trim();
+  const author=document.getElementById('b-author').value.trim();
+  const genre=document.getElementById('b-genre').value;
+  if(!title||!author||!genre){notify('Title, Author & Genre required','e');return;}
+  const id=document.getElementById('b-id').value;
+  const data={title,author,isbn:document.getElementById('b-isbn').value,genre,year:document.getElementById('b-year').value||null,publisher:document.getElementById('b-pub').value,copies:parseInt(document.getElementById('b-copies').value)||1,description:document.getElementById('b-desc').value,shelf:document.getElementById('b-shelf').value,rating:parseFloat(document.getElementById('b-rating').value)||4,tags:document.getElementById('b-tags').value};
+  if(id) await put('/books/'+id,data);
+  else await post('/books',data);
+  notify(id?'Book updated!':'Book added!','s');
+  cm('m-book');renderABooks();
+}
+
+async function delBook(id){
+  if(!confirm('Delete this book permanently?'))return;
+  await del('/books/'+id);
+  notify('Book deleted','i');renderABooks();
+}
+
+// ════════════════════════════════
+//  ADMIN: MEMBERS
+// ════════════════════════════════
+async function renderAMembers(){
+  const q=document.getElementById('a-mq')?.value||'';
+  const members=await get(`/members?q=${encodeURIComponent(q)}`);
+  document.getElementById('a-mem-sub').textContent=`${members.length} registered members`;
+  document.getElementById('a-mem-table').innerHTML=members.map((m,i)=>`
+    <tr>
+      <td>${i+1}</td>
+      <td><div style="font-weight:500">${m.name}</div></td>
+      <td><code style="font-size:.75rem">${m.member_id}</code></td>
+      <td>${m.department||'—'}</td>
+      <td>${m.year||'—'}</td>
+      <td style="font-size:.8rem">${m.email||'—'}</td>
+      <td style="font-size:.8rem">${m.phone||'—'}</td>
+      <td>${m.active_loans>0?`<span style="color:var(--teal);font-weight:600">${m.active_loans}</span>`:'0'}</td>
+      <td>${m.total_loans||0}</td>
+      <td style="font-size:.76rem;color:rgba(15,14,26,.38)">${fmt(m.created_at)}</td>
+      <td><button class="btn btn-outline btn-sm" onclick="viewMember('${m.member_id}')">View</button></td>
+    </tr>`).join('')||'<tr><td colspan="11" class="empty">No members found</td></tr>';
+}
+
+async function viewMember(mid){
+  const m=await get('/members/'+mid);
+  const active=m.loans.filter(l=>l.status==='active'||l.status==='overdue');
+  const hist=m.loans.filter(l=>l.status==='returned');
+  document.getElementById('m-member-content').innerHTML=`
+    <div class="member-detail-wrap">
+      <div class="member-av-big" style="background:${GC[m.department]||'var(--gold-l)'};color:#fff">${m.name[0]}</div>
+      <div style="flex:1">
+        <div style="font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:700">${m.name}</div>
+        <div style="font-size:.84rem;color:rgba(15,14,26,.5)">${m.member_id} · ${m.department||'—'} · ${m.year||'—'}</div>
+        <div style="font-size:.8rem;color:rgba(15,14,26,.42);margin-top:.3rem">${m.email||'—'} &nbsp;|&nbsp; ${m.phone||'—'}</div>
+        <div style="display:flex;gap:.5rem;margin-top:.65rem;flex-wrap:wrap">
+          <span class="bd b-a">${active.length} Active Loans</span>
+          <span class="bd b-re">${hist.length} Returned</span>
+          <span class="bd" style="background:var(--cream2);color:rgba(15,14,26,.5)">Member since ${fmt(m.created_at)}</span>
+        </div>
+      </div>
+    </div>
+    ${active.length?`<div style="font-weight:500;font-size:.9rem;margin-bottom:.5rem">📖 Active Loans</div>
+    <div class="tw" style="margin-bottom:1rem"><table><thead><tr><th>Book</th><th>Issued</th><th>Due</th><th>Status</th><th>Action</th></tr></thead><tbody>
+    ${active.map(l=>`<tr><td><strong>${l.book_title}</strong></td><td>${fmt(l.issue_date)}</td><td style="color:${dL(l.due_date)<0?'var(--rust)':'inherit'};font-weight:500">${fmt(l.due_date)}</td><td><span class="bd ${l.status==='overdue'?'b-ov':'b-a'}">${l.status}</span></td><td><button class="btn btn-teal btn-sm" onclick="openAdminReturn(${l.id},'${l.book_title.replace(/'/g,"\\'")}',${l.status==='overdue'},${l.status==='overdue'?Math.abs(dL(l.due_date))*2:0});cm('m-member')">Return</button></td></tr>`).join('')}
+    </tbody></table></div>`:''}
+    ${hist.length?`<div style="font-weight:500;font-size:.9rem;margin-bottom:.5rem">📜 Return History</div>
+    <div class="tw"><table><thead><tr><th>Book</th><th>Returned</th><th>Fine</th></tr></thead><tbody>
+    ${hist.slice(0,5).map(l=>`<tr><td>${l.book_title}</td><td>${fmt(l.return_date)}</td><td>${l.fine>0?`<span style="color:var(--rust)">₹${l.fine}</span>`:'₹0'}</td></tr>`).join('')}
+    </tbody></table></div>`:''}`;
+  om('m-member');
+}
+
+// ════════════════════════════════
+//  ADMIN: ANALYTICS
+// ════════════════════════════════
+async function renderAAnalytics(){
+  const [dash,an]=await Promise.all([get('/dashboard'),get('/analytics')]);
+  const approved=an.req_status.find(r=>r.status==='approved')?.cnt||0;
+  const rejected=an.req_status.find(r=>r.status==='rejected')?.cnt||0;
+  const pending=an.req_status.find(r=>r.status==='pending')?.cnt||0;
+  document.getElementById('a-an-stats').innerHTML=`
+    <div class="sc"><div class="si2" style="background:var(--gold-l)">📨</div><div><div class="sn">${dash.total_requests}</div><div class="sl">Total Requests</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--green-l)">✅</div><div><div class="sn">${approved}</div><div class="sl">Approved</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--rust-l)">❌</div><div><div class="sn">${rejected}</div><div class="sl">Rejected</div></div></div>
+    <div class="sc"><div class="si2" style="background:var(--purple-l)">💰</div><div><div class="sn">₹${an.fine_collected}</div><div class="sl">Fines Collected</div></div></div>`;
+
+  const mx=an.genre_demand[0]?.total||1;
+  document.getElementById('a-an-genre').innerHTML=an.genre_demand.map((g,i)=>`
+    <div class="drow"><div style="width:80px;font-size:.79rem">${g.genre}</div><div class="dbg"><div class="dfill" style="width:${Math.round((g.total||1)/mx*100)}%;background:${Object.values(GC)[i%9]}"></div></div><div style="font-size:.72rem;color:rgba(15,14,26,.38);width:35px;text-align:right">${g.total||0}</div></div>`).join('');
+
+  document.getElementById('a-an-top').innerHTML=an.top_requested.map((b,i)=>`
+    <div class="drow"><div style="width:18px;font-size:.75rem;font-weight:700;color:var(--gold)">${i+1}</div><div style="flex:1;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${b.title}</div><div style="font-size:.77rem;font-weight:600;color:var(--teal)">${b.cnt}</div></div>`).join('')||'<div class="empty" style="padding:.85rem">No requests yet</div>';
+
+  if(statusInst)statusInst.destroy();
+  const ctx=document.getElementById('status-chart').getContext('2d');
+  statusInst=new Chart(ctx,{type:'bar',data:{labels:['Pending','Approved','Rejected'],datasets:[{data:[pending,approved,rejected],backgroundColor:['#f5ddb0','#d0f0d0','#fbd5c8'],borderColor:['#c9893a','#2a6b2a','#b84020'],borderWidth:2,borderRadius:7}]},options:{responsive:true,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,grid:{color:'rgba(0,0,0,0.04)'}},x:{grid:{display:false}}}}});
+
+  document.getElementById('a-an-returns').innerHTML=`
+    <div style="text-align:center;padding:1rem">
+      <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--teal)">${an.returns_on_time}</div>
+      <div style="font-size:.82rem;color:rgba(15,14,26,.45)">On-time returns</div>
+      <div style="margin-top:1rem;font-size:.85rem;color:rgba(15,14,26,.5)">Students who returned books on or before the due date</div>
+    </div>`;
+}
+
+// ════════════════════════════════
+//  ADMIN: REPORTS
+// ════════════════════════════════
+async function renderAQuickSummary(){
+  const dash=await get('/dashboard');
+  document.getElementById('a-qsummary').innerHTML=[
+    ['Total Books',dash.total_books],['Available',dash.available_books],
+    ['Total Members',dash.total_members],['Active Loans',dash.active_loans],
+    ['Overdue',dash.overdue_loans],['Pending Requests',dash.pending_reqs],
+  ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border);font-size:.85rem"><span style="color:rgba(15,14,26,.5)">${l}</span><strong>${v}</strong></div>`).join('');
+}
+
+let reportData=[];
+async function genReport(){
+  const type=document.getElementById('a-rtype').value;
+  let title='',html='';
+
+  if(type==='pending'){
+    title='Pending Book Requests';
+    const rows=await get('/requests?status=pending');
+    reportData=rows;
+    html=rows.length?tbl(['Book','Member','ID','Dept','Preferred Date','Requested On'],rows.map(r=>[r.book_title,r.member_name,r.member_id,r.department||'—',fmt(r.preferred_date),fmt(r.created_at)])):'<div class="empty">No pending requests ✅</div>';
+  } else if(type==='overdue'){
+    title='Overdue Books Report';
+    const loans=await get('/loans?status=overdue');
+    reportData=loans;
+    const fine_total=loans.reduce((s,l)=>s+(Math.abs(dL(l.due_date))*2),0);
+    html=loans.length?`<div style="margin-bottom:.75rem;padding:.65rem;background:var(--rust-l);border-radius:8px;font-size:.85rem">Total outstanding fine: <strong>₹${fine_total}</strong></div>`+tbl(['Book','Member','ID','Due Date','Days Late','Fine'],loans.map(l=>[l.book_title,l.member_name,l.member_id,fmt(l.due_date),Math.abs(dL(l.due_date))+'d','₹'+(Math.abs(dL(l.due_date))*2)])):'<div class="empty">No overdue books ✅</div>';
+  } else if(type==='popular'){
+    title='Most Requested Books';
+    const an=await get('/analytics');
+    reportData=an.top_requested;
+    html=an.top_requested.length?tbl(['#','Title','Requests'],an.top_requested.map((b,i)=>[i+1,b.title,b.cnt])):'<div class="empty">No data</div>';
+  } else if(type==='members'){
+    title='All Members Report';
+    const members=await get('/members');
+    reportData=members;
+    html=tbl(['#','Name','Member ID','Dept','Year','Email','Phone','Active Loans'],members.map((m,i)=>[i+1,m.name,m.member_id,m.department||'—',m.year||'—',m.email||'—',m.phone||'—',m.active_loans]));
+  } else if(type==='stock'){
+    title='Stock Summary';
+    const an=await get('/analytics');
+    reportData=an.genre_demand;
+    html=tbl(['Genre','Titles','Total Borrows'],an.genre_demand.map(g=>[g.genre,g.cnt,g.total]));
+  } else if(type==='fines'){
+    title='Fines Summary';
+    const loans=await get('/loans?status=overdue');
+    reportData=loans;
+    const total=loans.reduce((s,l)=>s+(Math.abs(dL(l.due_date))*2),0);
+    html=`<div style="margin-bottom:.75rem;padding:.65rem;background:var(--gold-l);border-radius:8px;font-size:.85rem">Total outstanding: <strong>₹${total}</strong></div>`+(loans.length?tbl(['Book','Member','ID','Due Date','Days Late','Fine Amount'],loans.map(l=>[l.book_title,l.member_name,l.member_id,fmt(l.due_date),Math.abs(dL(l.due_date))+'d','₹'+(Math.abs(dL(l.due_date))*2)])):'<div class="empty">No outstanding fines ✅</div>');
+  }
+
+  document.getElementById('a-report-title').textContent=title;
+  document.getElementById('a-report-out').innerHTML=`<div style="font-size:.74rem;color:rgba(15,14,26,.32);margin-bottom:.6rem">Generated: ${new Date().toLocaleString()}</div>`+html;
+  notify('Report generated!','s');
+}
+
+function tbl(hdr,rows){
+  return`<div class="tw"><table><thead><tr>${hdr.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(v=>`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+}
+
+function exportCSV(){
+  if(!reportData.length){notify('Generate a report first','e');return;}
+  const title=document.getElementById('a-report-title').textContent;
+  const keys=Object.keys(reportData[0]);
+  const csv=keys.join(',')+'\n'+reportData.map(r=>keys.map(k=>`"${(r[k]||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download=title.replace(/\s+/g,'_')+'.csv';a.click();
+}
+
+async function exportBooks(){
+  const books=await get('/books');
+  const keys=['title','author','genre','isbn','year','publisher','copies','available','shelf','rating','borrow_count'];
+  const csv=keys.join(',')+'\n'+books.map(b=>keys.map(k=>`"${(b[k]||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='library_books.csv';a.click();
+  notify('Books exported!','s');
+}
+
+async function exportMembers(){
+  const members=await get('/members');
+  const keys=['name','member_id','department','year','email','phone','active_loans','total_loans','created_at'];
+  const csv=keys.join(',')+'\n'+members.map(m=>keys.map(k=>`"${(m[k]||'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='library_members.csv';a.click();
+  notify('Members exported!','s');
+}
+
+// ════════════════════════════════
+//  SETTINGS
+// ════════════════════════════════
+async function loadSettings(){
+  const s=await get('/settings');
+  document.getElementById('set-loan').value=s.loan_days||14;
+  document.getElementById('set-max').value=s.max_books||3;
+  document.getElementById('set-fine').value=s.fine_per_day||2;
+  document.getElementById('set-ren').value=s.max_renewals||2;
+  const dash=await get('/dashboard');
+  document.getElementById('set-info').textContent=`${dash.total_books} books · ${dash.total_members} members · ${dash.active_loans} active loans`;
+}
+async function saveSettings(){
+  await post('/settings',{loan_days:document.getElementById('set-loan').value,max_books:document.getElementById('set-max').value,fine_per_day:document.getElementById('set-fine').value,max_renewals:document.getElementById('set-ren').value});
+  notify('Settings saved!','s');
+}
+async function changePwd(){
+  const cur=document.getElementById('pwd-cur').value;
+  const nw=document.getElementById('pwd-new').value;
+  const cf=document.getElementById('pwd-cnf').value;
+  if(nw!==cf){notify('Passwords do not match','e');return;}
+  if(nw.length<6){notify('Min 6 characters','e');return;}
+  await post('/admin/change-password',{username:'admin',current_password:cur,new_password:nw});
+  notify('Password updated!','s');cm('m-pwd');
+}
+</script>
+</body>
+</html>
