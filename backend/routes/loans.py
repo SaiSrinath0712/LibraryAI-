@@ -1,11 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
-from database.db import get_db
-from models.loan import Loan
-from models.book import Book
-from models.user import User
-from models.settings import Settings
+from database.db import get_db, get_next_sequence_value
 from schemas.loan import LoanIssueRequest, LoanRenewReturnRequest, LoanResponse
 from services.fine_service import calculate_fine
 from services.notification_service import create_notification
@@ -14,117 +9,117 @@ from typing import List, Optional
 
 router = APIRouter(tags=["Loans"])
 
-def refresh_loans_status(db: Session):
+def refresh_loans_status(db):
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    active_loans = db.query(Loan).filter(Loan.status.in_(["active", "overdue"])).all()
+    active_loans = list(db.loans.find({"status": {"$in": ["active", "overdue"]}}))
     for l in active_loans:
-        if l.due_date < today:
-            l.status = "overdue"
-        else:
-            l.status = "active"
-        l.fine_amount = calculate_fine(l.due_date, db=db)
-    db.commit()
+        status = "overdue" if l["due_date"] < today else "active"
+        fine_amount = calculate_fine(l["due_date"], db=db)
+        db.loans.update_one({"id": l["id"]}, {"$set": {"status": status, "fine_amount": fine_amount}})
 
 @router.get("/loans", response_model=List[LoanResponse])
 def get_loans(
     status: Optional[str] = None,
     member_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+    db = Depends(get_db)
 ):
     refresh_loans_status(db)
     
-    query = db.query(Loan)
+    query = {}
     if status:
-        query = query.filter(Loan.status == status)
+        query["status"] = status
         
     if member_id:
-        user = db.query(User).filter(User.member_id == member_id).first()
+        user = db.users.find_one({"member_id": member_id})
         if user:
-            query = query.filter(Loan.user_id == user.id)
+            query["user_id"] = user["id"]
         else:
             return []
             
-    loans = query.order_by(Loan.id.desc()).all()
+    loans = list(db.loans.find(query).sort("id", -1))
     
     response_list = []
     for l in loans:
+        book = db.books.find_one({"id": l["book_id"]})
+        user = db.users.find_one({"id": l["user_id"]})
         response_list.append({
-            "id": l.id,
-            "user_id": l.user_id,
-            "book_id": l.book_id,
-            "issue_date": l.issue_date,
-            "due_date": l.due_date,
-            "return_date": l.return_date,
-            "renew_count": l.renew_count,
-            "renewals": l.renew_count,
-            "status": l.status,
-            "fine_amount": l.fine_amount,
-            "fine": l.fine_amount,
-            "request_id": l.request_id,
-            "book_title": l.book.title if l.book else None,
-            "author": l.book.author if l.book else None,
-            "genre": l.book.genre if l.book else None,
-            "shelf": l.book.shelf_location if l.book else None,
-            "isbn": l.book.isbn if l.book else None,
-            "member_name": l.user.name if l.user else None,
-            "member_id": l.user.member_id if l.user else None,
-            "department": l.user.department if l.user else None,
+            "id": l["id"],
+            "user_id": l["user_id"],
+            "book_id": l["book_id"],
+            "issue_date": l.get("issue_date"),
+            "due_date": l.get("due_date"),
+            "return_date": l.get("return_date"),
+            "renew_count": l.get("renew_count", 0),
+            "renewals": l.get("renew_count", 0),
+            "status": l.get("status"),
+            "fine_amount": l.get("fine_amount", 0.0),
+            "fine": l.get("fine_amount", 0.0),
+            "request_id": l.get("request_id"),
+            "book_title": book.get("title") if book else None,
+            "author": book.get("author") if book else None,
+            "genre": book.get("genre") if book else None,
+            "shelf": book.get("shelf_location") if book else None,
+            "isbn": book.get("isbn") if book else None,
+            "member_name": user.get("name") if user else None,
+            "member_id": user.get("member_id") if user else None,
+            "department": user.get("department") if user else None,
         })
 
     return response_list
 
 @router.post("/loans/issue", response_model=LoanResponse)
-def issue_loan(req: LoanIssueRequest, db: Session = Depends(get_db), current_user=Depends(get_admin_user)):
-    user = db.query(User).filter(User.member_id == req.member_id).first()
+def issue_loan(req: LoanIssueRequest, db = Depends(get_db), current_user=Depends(get_admin_user)):
+    user = db.users.find_one({"member_id": req.member_id})
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
         
-    book = db.query(Book).filter(Book.id == req.book_id).first()
+    book = db.books.find_one({"id": req.book_id})
     if not book:
         raise HTTPException(status_code=404, detail="Book not found")
         
-    if book.available_copies < 1:
+    if book.get("available_copies", 0) < 1:
         raise HTTPException(status_code=400, detail="No copies available for borrowing")
         
-    dup = db.query(Loan).filter(
-        Loan.book_id == req.book_id,
-        Loan.user_id == user.id,
-        Loan.status.in_(["active", "overdue"])
-    ).first()
+    dup = db.loans.find_one({
+        "book_id": req.book_id,
+        "user_id": user["id"],
+        "status": {"$in": ["active", "overdue"]}
+    })
     if dup:
         raise HTTPException(status_code=409, detail="User already has an active loan for this book")
         
-    settings = db.query(Settings).first()
-    max_books = settings.max_books if settings else 3
-    active_count = db.query(Loan).filter(
-        Loan.user_id == user.id,
-        Loan.status.in_(["active", "overdue"])
-    ).count()
+    settings = db.settings.find_one({"_id": "global"})
+    max_books = settings.get("max_books", 3) if settings else 3
+    active_count = db.loans.count_documents({
+        "user_id": user["id"],
+        "status": {"$in": ["active", "overdue"]}
+    })
     if active_count >= max_books:
         raise HTTPException(status_code=400, detail=f"User has reached the limit of {max_books} books")
         
-    loan_days = settings.loan_period_days if settings else 14
+    loan_days = settings.get("loan_period_days", 14) if settings else 14
     issue_date = datetime.utcnow().strftime("%Y-%m-%d")
     due_date = req.due_date or (datetime.utcnow() + timedelta(days=loan_days)).strftime("%Y-%m-%d")
     
-    loan = Loan(
-        user_id=user.id,
-        book_id=req.book_id,
-        issue_date=issue_date,
-        due_date=due_date,
-        status="active"
-    )
-    db.add(loan)
+    new_id = get_next_sequence_value("loanid")
+    loan = {
+        "id": new_id,
+        "user_id": user["id"],
+        "book_id": req.book_id,
+        "issue_date": issue_date,
+        "due_date": due_date,
+        "status": "active",
+        "renew_count": 0,
+        "fine_amount": 0.0
+    }
+    db.loans.insert_one(loan)
     
-    book.available_copies -= 1
-    
-    db.commit()
-    db.refresh(loan)
+    db.books.update_one({"id": req.book_id}, {"$inc": {"available_copies": -1}})
     return loan
 
 @router.post("/loans/{id}/return")
 @router.post("/loans/return")
-def return_loan(id: Optional[int] = None, req: Optional[LoanRenewReturnRequest] = None, db: Session = Depends(get_db)):
+def return_loan(id: Optional[int] = None, req: Optional[LoanRenewReturnRequest] = None, db = Depends(get_db)):
     loan_id = id
     if req and req.loan_id:
         loan_id = req.loan_id
@@ -132,32 +127,33 @@ def return_loan(id: Optional[int] = None, req: Optional[LoanRenewReturnRequest] 
     if not loan_id:
         raise HTTPException(status_code=400, detail="Loan ID is required")
         
-    loan = db.query(Loan).filter(Loan.id == loan_id).first()
+    loan = db.loans.find_one({"id": loan_id})
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
         
-    if loan.status == "returned":
+    if loan["status"] == "returned":
         raise HTTPException(status_code=400, detail="Book already returned")
         
     today = datetime.utcnow().strftime("%Y-%m-%d")
-    fine = calculate_fine(loan.due_date, today, db=db)
+    fine = calculate_fine(loan["due_date"], today, db=db)
     
-    loan.status = "returned"
-    loan.return_date = today
-    loan.fine_amount = fine
+    db.loans.update_one({"id": loan_id}, {"$set": {
+        "status": "returned",
+        "return_date": today,
+        "fine_amount": fine
+    }})
     
-    book = loan.book
+    book = db.books.find_one({"id": loan["book_id"]})
     if book:
-        book.available_copies += 1
+        db.books.update_one({"id": book["id"]}, {"$inc": {"available_copies": 1}})
         
-    create_notification(db, loan.user_id, f"You returned '{book.title if book else 'Book'}' successfully. Fine: ₹{fine}")
+    create_notification(db, loan["user_id"], f"You returned '{book.get('title') if book else 'Book'}' successfully. Fine: ₹{fine}")
     
-    db.commit()
     return {"ok": True, "fine": fine, "return_date": today}
 
 @router.post("/loans/{id}/renew")
 @router.post("/loans/renew")
-def renew_loan(id: Optional[int] = None, req: Optional[LoanRenewReturnRequest] = None, db: Session = Depends(get_db)):
+def renew_loan(id: Optional[int] = None, req: Optional[LoanRenewReturnRequest] = None, db = Depends(get_db)):
     loan_id = id
     if req and req.loan_id:
         loan_id = req.loan_id
@@ -165,26 +161,29 @@ def renew_loan(id: Optional[int] = None, req: Optional[LoanRenewReturnRequest] =
     if not loan_id:
         raise HTTPException(status_code=400, detail="Loan ID is required")
         
-    loan = db.query(Loan).filter(Loan.id == loan_id).first()
+    loan = db.loans.find_one({"id": loan_id})
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
         
-    if loan.status == "returned":
+    if loan["status"] == "returned":
         raise HTTPException(status_code=400, detail="Cannot renew returned book")
         
-    settings = db.query(Settings).first()
-    max_renewals = settings.max_renewals if settings else 2
-    if loan.renew_count >= max_renewals:
+    settings = db.settings.find_one({"_id": "global"})
+    max_renewals = settings.get("max_renewals", 2) if settings else 2
+    renew_count = loan.get("renew_count", 0)
+    if renew_count >= max_renewals:
         raise HTTPException(status_code=400, detail=f"Maximum of {max_renewals} renewals allowed")
         
-    loan_days = settings.loan_period_days if settings else 14
+    loan_days = settings.get("loan_period_days", 14) if settings else 14
     new_due = (datetime.utcnow() + timedelta(days=loan_days)).strftime("%Y-%m-%d")
     
-    loan.due_date = new_due
-    loan.status = "active"
-    loan.renew_count += 1
+    db.loans.update_one({"id": loan_id}, {"$set": {
+        "due_date": new_due,
+        "status": "active"
+    }, "$inc": {"renew_count": 1}})
     
-    create_notification(db, loan.user_id, f"Your loan for '{loan.book.title}' has been renewed. New due date: {new_due}")
+    book = db.books.find_one({"id": loan["book_id"]})
+    book_title = book.get("title") if book else "Book"
+    create_notification(db, loan["user_id"], f"Your loan for '{book_title}' has been renewed. New due date: {new_due}")
     
-    db.commit()
     return {"ok": True, "new_due": new_due}

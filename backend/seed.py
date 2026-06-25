@@ -1,45 +1,41 @@
 import os
 import sys
 from datetime import datetime, timedelta
-from database.db import SessionLocal, engine, Base
-from models.user import User
-from models.book import Book
-from models.loan import Loan
-from models.request import BorrowRequest
-from models.settings import Settings
+from database.db import db, get_next_sequence_value
 from utils.security import get_password_hash
 
-# Create tables
-Base.metadata.create_all(bind=engine)
-
 def seed_db():
-    db = SessionLocal()
     try:
-        db.query(User).delete()
-        db.query(Book).delete()
-        db.query(Loan).delete()
-        db.query(BorrowRequest).delete()
-        db.query(Settings).delete()
-        db.commit()
+        # Clear collections
+        db.users.delete_many({})
+        db.books.delete_many({})
+        db.loans.delete_many({})
+        db.borrow_requests.delete_many({})
+        db.settings.delete_many({})
+        db.notifications.delete_many({})
+        db.counters.delete_many({})
 
-        settings = Settings(
-            loan_period_days=14,
-            max_books=3,
-            fine_per_day=2.0,
-            max_renewals=2
-        )
-        db.add(settings)
+        db.settings.insert_one({
+            "_id": "global",
+            "loan_period_days": 14,
+            "max_books": 3,
+            "fine_per_day": 2.0,
+            "max_renewals": 2
+        })
         
         hashed_password = get_password_hash("library@2024")
 
-        admin = User(
-            name="Library Admin",
-            email="admin@college.edu",
-            phone="9999999999",
-            password_hash=hashed_password,
-            role="admin"
-        )
-        db.add(admin)
+        admin_id = get_next_sequence_value("userid")
+        admin = {
+            "id": admin_id,
+            "name": "Library Admin",
+            "email": "admin@college.edu",
+            "phone": "9999999999",
+            "password_hash": hashed_password,
+            "role": "admin",
+            "created_at": datetime.utcnow()
+        }
+        db.users.insert_one(admin)
 
         students_data = [
             ('Arjun Kumar', 'STU-001', 'arjun@college.edu', '9876543210', 'CSE', '3rd Year'),
@@ -66,20 +62,21 @@ def seed_db():
         
         students = []
         for name, m_id, email, phone, dept, yr in students_data:
-            stu = User(
-                name=name,
-                member_id=m_id,
-                email=email,
-                phone=phone,
-                department=dept,
-                year=yr,
-                password_hash=hashed_password,
-                role="student"
-            )
-            db.add(stu)
+            stu_id = get_next_sequence_value("userid")
+            stu = {
+                "id": stu_id,
+                "name": name,
+                "member_id": m_id,
+                "email": email,
+                "phone": phone,
+                "department": dept,
+                "year": yr,
+                "password_hash": hashed_password,
+                "role": "student",
+                "created_at": datetime.utcnow()
+            }
+            db.users.insert_one(stu)
             students.append(stu)
-        
-        db.commit()
         
         raw_books = [
             ['Hands-On Machine Learning','Aurélien Géron','978-1492032649','Technology',2022,"O'Reilly",4,'Best ML practical guide','B4',4.8,'ml,python,scikit'],
@@ -133,106 +130,116 @@ def seed_db():
             ['The Problems of Philosophy','Bertrand Russell','978-0195002119','Philosophy',1912,'Oxford',2,'Philosophy intro','P4',4.3,'philosophy,russell,introduction'],
             ['Being and Time','Martin Heidegger','978-0061575594','Philosophy',1927,'Harper',2,'Existentialist philosophy','P5',4.2,'philosophy,existentialism,heidegger']
         ]
-
+        
         books = []
         for b in raw_books:
-            new_book = Book(
-                title=b[0],
-                author=b[1],
-                isbn=b[2],
-                genre=b[3],
-                year=b[4],
-                publisher=b[5],
-                copies=b[6],
-                available_copies=b[6],
-                description=b[7],
-                shelf_location=b[8],
-                rating=b[9],
-                tags=b[10]
-            )
-            db.add(new_book)
+            new_id = get_next_sequence_value("bookid")
+            new_book = {
+                "id": new_id,
+                "title": b[0],
+                "author": b[1],
+                "isbn": b[2],
+                "genre": b[3],
+                "year": b[4],
+                "publisher": b[5],
+                "copies": b[6],
+                "available_copies": b[6],
+                "description": b[7],
+                "shelf_location": b[8],
+                "rating": b[9],
+                "tags": b[10],
+                "created_at": datetime.utcnow()
+            }
+            db.books.insert_one(new_book)
             books.append(new_book)
             
-        db.commit()
-
         today = datetime.utcnow()
         
         # 15 returned loans
         for i in range(15):
-            student_id = students[i].id
-            book_id = books[i].id
+            student_id = students[i]["id"]
+            book_id = books[i]["id"]
             issue_date = (today - timedelta(days=20)).strftime("%Y-%m-%d")
             due_date = (today - timedelta(days=6)).strftime("%Y-%m-%d")
             return_date = (today - timedelta(days=8)).strftime("%Y-%m-%d")
             
-            loan = Loan(
-                user_id=student_id,
-                book_id=book_id,
-                issue_date=issue_date,
-                due_date=due_date,
-                return_date=return_date,
-                renew_count=0,
-                status="returned",
-                fine_amount=0.0
-            )
-            db.add(loan)
+            loan_id = get_next_sequence_value("loanid")
+            loan = {
+                "id": loan_id,
+                "user_id": student_id,
+                "book_id": book_id,
+                "issue_date": issue_date,
+                "due_date": due_date,
+                "return_date": return_date,
+                "renew_count": 0,
+                "status": "returned",
+                "fine_amount": 0.0
+            }
+            db.loans.insert_one(loan)
             
         # 3 active loans
         for i in range(3):
-            student_id = students[15 + i].id
-            book_id = books[15 + i].id
+            student_id = students[15 + i]["id"]
+            book_id = books[15 + i]["id"]
             issue_date = (today - timedelta(days=5)).strftime("%Y-%m-%d")
             due_date = (today + timedelta(days=9)).strftime("%Y-%m-%d")
             
-            loan = Loan(
-                user_id=student_id,
-                book_id=book_id,
-                issue_date=issue_date,
-                due_date=due_date,
-                return_date=None,
-                renew_count=0,
-                status="active",
-                fine_amount=0.0
-            )
-            db.add(loan)
-            books[15 + i].available_copies -= 1
+            loan_id = get_next_sequence_value("loanid")
+            loan = {
+                "id": loan_id,
+                "user_id": student_id,
+                "book_id": book_id,
+                "issue_date": issue_date,
+                "due_date": due_date,
+                "return_date": None,
+                "renew_count": 0,
+                "status": "active",
+                "fine_amount": 0.0
+            }
+            db.loans.insert_one(loan)
+            db.books.update_one({"id": book_id}, {"$inc": {"available_copies": -1}})
             
         # 2 overdue loans
         for i in range(2):
-            student_id = students[18 + i].id
-            book_id = books[18 + i].id
+            student_id = students[18 + i]["id"]
+            book_id = books[18 + i]["id"]
             issue_date = (today - timedelta(days=20)).strftime("%Y-%m-%d")
             due_date = (today - timedelta(days=6)).strftime("%Y-%m-%d")
             
-            loan = Loan(
-                user_id=student_id,
-                book_id=book_id,
-                issue_date=issue_date,
-                due_date=due_date,
-                return_date=None,
-                renew_count=0,
-                status="overdue",
-                fine_amount=12.0
-            )
-            db.add(loan)
-            books[18 + i].available_copies -= 1
+            loan_id = get_next_sequence_value("loanid")
+            loan = {
+                "id": loan_id,
+                "user_id": student_id,
+                "book_id": book_id,
+                "issue_date": issue_date,
+                "due_date": due_date,
+                "return_date": None,
+                "renew_count": 0,
+                "status": "overdue",
+                "fine_amount": 12.0
+            }
+            db.loans.insert_one(loan)
+            db.books.update_one({"id": book_id}, {"$inc": {"available_copies": -1}})
             
         # 10 pending requests
         for i in range(10):
-            student_id = students[i].id
-            book_id = books[20 + i].id
+            student_id = students[i]["id"]
+            book_id = books[20 + i]["id"]
             preferred_date = (today + timedelta(days=2)).strftime("%Y-%m-%d")
             
-            req = BorrowRequest(
-                user_id=student_id,
-                book_id=book_id,
-                preferred_date=preferred_date,
-                note="Need this book for exams.",
-                status="pending"
-            )
-            db.add(req)
+            req_id = get_next_sequence_value("requestid")
+            req = {
+                "id": req_id,
+                "user_id": student_id,
+                "book_id": book_id,
+                "preferred_date": preferred_date,
+                "note": "Need this book for exams.",
+                "status": "pending",
+                "request_date": today.strftime("%Y-%m-%d"),
+                "created_at": today
+            }
+            db.borrow_requests.insert_one(req)
 
-        db.commit()
         print("Database seeded successfully!")
         print(f"Admin created: admin / library@2024")
         print(f"Books created: {len(books)}")
@@ -241,13 +248,10 @@ def seed_db():
         print(f"Pending requests created: 10")
         
     except Exception as e:
-        db.rollback()
         import traceback
         traceback.print_exc()
         print(f"Error seeding database: {e}")
         sys.exit(1)
-    finally:
-        db.close()
 
 if __name__ == "__main__":
     seed_db()

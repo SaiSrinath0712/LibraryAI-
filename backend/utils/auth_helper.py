@@ -1,21 +1,23 @@
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
-from sqlalchemy.orm import Session
 from database.db import get_db
-from models.user import User
 from utils.jwt_handler import decode_access_token
 
-# Define standard oauth2 scheme
+class DotDict(dict):
+    """dot.notation access to dictionary attributes"""
+    __getattr__ = dict.get
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login", auto_error=False)
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)) -> User:
+def get_current_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     if not token:
-        # Fallback to checking if it's passed as a token parameter in request or from standard header
         raise credentials_exception
         
     payload = decode_access_token(token)
@@ -26,12 +28,12 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
     if user_id is None:
         raise credentials_exception
 
-    user = db.query(User).filter(User.id == int(user_id)).first()
+    user = db.users.find_one({"id": int(user_id)})
     if user is None:
         raise credentials_exception
-    return user
+    return DotDict(user)
 
-def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
+def get_admin_user(current_user = Depends(get_current_user)):
     if current_user.role != "admin":
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
@@ -39,7 +41,7 @@ def get_admin_user(current_user: User = Depends(get_current_user)) -> User:
         )
     return current_user
 
-def get_optional_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_optional_user(token: str = Depends(oauth2_scheme), db=Depends(get_db)):
     if not token:
         return None
     payload = decode_access_token(token)
@@ -48,4 +50,5 @@ def get_optional_user(token: str = Depends(oauth2_scheme), db: Session = Depends
     user_id = payload.get("sub")
     if user_id is None:
         return None
-    return db.query(User).filter(User.id == int(user_id)).first()
+    user = db.users.find_one({"id": int(user_id)})
+    return DotDict(user) if user else None
