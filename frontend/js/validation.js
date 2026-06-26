@@ -1,82 +1,102 @@
 /**
- * Global Real-Time Validation & Input Restriction Engine
+ * Global Real-Time Strict Input Restriction Engine
  */
 
 const FieldRules = {
     name: {
-        allowed: /^[A-Za-z ]*$/,
-        regex: /^[A-Za-z ]+$/,
+        allowedCharRegex: /^[A-Za-z ]$/, // For keydown checking
+        stripRegex: /[^A-Za-z ]/g,       // For paste stripping
+        regex: /^[A-Za-z ]+$/,           // Full string validation
         min: 3, max: 50,
         msg: "Only alphabets and spaces allowed (3-50 chars)."
     },
     memberId: {
-        allowed: /^[STU0-9\-]*$/,
+        allowedCharRegex: /^[STU0-9\-]$/i,
+        stripRegex: /[^STU0-9\-]/gi,
         regex: /^STU-\d{3}$/,
         msg: "Format: STU-XXX"
     },
     email: {
-        allowed: /^[^\s]*$/,
+        allowedCharRegex: /^[^\s]$/,
+        stripRegex: /\s/g,
         regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
         msg: "Valid email required."
     },
     phone: {
-        allowed: /^[0-9]*$/,
+        allowedCharRegex: /^[0-9]$/,
+        stripRegex: /[^0-9]/g,
         regex: /^[6-9]\d{9}$/,
         max: 10,
         msg: "Exactly 10 digits starting with 6,7,8,9."
     },
     password: {
-        allowed: /.*/, // Any char
+        allowedCharRegex: /./, // Any char
+        stripRegex: null,
         regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,50}$/,
         msg: "Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char."
     },
     bookTitle: {
-        allowed: /^[A-Za-z0-9 \-':,\.]*$/,
+        allowedCharRegex: /^[A-Za-z0-9 \-':,\.]$/,
+        stripRegex: /[^A-Za-z0-9 \-':,\.]/g,
         regex: /^[A-Za-z0-9 \-':,\.]+$/,
         min: 3, max: 100,
         msg: "Min 3 chars. Only standard punctuation allowed."
     },
     author: {
-        allowed: /^[A-Za-z \.']*$/,
+        allowedCharRegex: /^[A-Za-z \.']$/,
+        stripRegex: /[^A-Za-z \.']/g,
         regex: /^[A-Za-z \.']+$/,
         min: 3, max: 100,
         msg: "Only alphabets, spaces, periods, apostrophes."
     },
     publisher: {
-        allowed: /^[A-Za-z0-9 &*\.,\-]*$/,
-        regex: /^[A-Za-z0-9 &*\.,\-]+$/,
-        msg: "Alphabets, numbers, and & * . , -"
+        allowedCharRegex: /^[A-Za-z0-9 &*\.,]$/,
+        stripRegex: /[^A-Za-z0-9 &*\.,]/g,
+        regex: /^[A-Za-z0-9 &*\.,]+$/,
+        msg: "Alphabets, numbers, and & * . ,"
     },
     isbn: {
-        allowed: /^[\d\-]*$/,
+        allowedCharRegex: /^[\d\-]$/,
+        stripRegex: /[^\d\-]/g,
         regex: /^(\d{10}|\d{13}|\d+-\d+-\d+-\d+-\d+)$/,
         msg: "Digits and hyphens only."
     },
     shelf: {
-        allowed: /^[A-Z0-9\-]*$/,
+        allowedCharRegex: /^[A-Z0-9\-]$/i,
+        stripRegex: /[^A-Z0-9\-]/gi,
         regex: /^[A-Z0-9\-]+$/,
         msg: "A-Z, 0-9, and hyphen."
     },
     tags: {
-        allowed: /^[A-Za-z0-9, ]*$/,
+        allowedCharRegex: /^[A-Za-z0-9, ]$/,
+        stripRegex: /[^A-Za-z0-9, ]/g,
         regex: /^[A-Za-z0-9, ]+$/,
         msg: "Letters, numbers, comma, space."
     },
     year: {
-        allowed: /^[0-9]*$/,
+        allowedCharRegex: /^[0-9]$/,
+        stripRegex: /[^0-9]/g,
         regex: /^[0-9]{4}$/,
         max: 4,
         msg: "Exactly 4 digits."
     },
     copies: {
-        allowed: /^[0-9]*$/,
+        allowedCharRegex: /^[0-9]$/,
+        stripRegex: /[^0-9]/g,
         regex: /^[1-9][0-9]*$/,
         msg: "Positive integer only."
     },
     rating: {
-        allowed: /^[0-9\.]*$/,
+        allowedCharRegex: /^[0-9\.]$/,
+        stripRegex: /[^0-9\.]/g,
         regex: /^[1-5](\.[0-9])?$/,
         msg: "1.0 to 5.0"
+    },
+    description: {
+        allowedCharRegex: /./, 
+        stripRegex: /[<>]/g, 
+        regex: /^[^<>]*$/,
+        msg: "HTML/Script tags not allowed."
     }
 };
 
@@ -97,59 +117,131 @@ function getRule(input) {
     if (id.includes("shelf")) return FieldRules.shelf;
     if (id.includes("tag")) return FieldRules.tags;
     if (id.includes("year")) return FieldRules.year;
-    if (id.includes("copies") || id.includes("loan_period") || id.includes("max_books")) return FieldRules.copies;
+    if (id.includes("copies") || id.includes("loan_period") || id.includes("max_books") || id.includes("fine")) return FieldRules.copies;
     if (id.includes("rating")) return FieldRules.rating;
+    if (id.includes("note") || id.includes("description") || name.includes("note") || name.includes("description")) return FieldRules.description;
 
     return null;
 }
 
-// Attach keystroke restrictions
+// Intercept Keystrokes natively
+function handleKeydown(e, rule, max) {
+    // Allow special control keys (Backspace, Delete, Arrow keys, Tab, Ctrl+A/C/V)
+    if (
+        e.key.length !== 1 || 
+        e.ctrlKey || e.metaKey || e.altKey
+    ) {
+        return;
+    }
+
+    let char = e.key;
+
+    // 1. Strict Character Filter
+    if (rule && rule.allowedCharRegex) {
+        if (!rule.allowedCharRegex.test(char)) {
+            e.preventDefault(); // Completely block the keystroke
+            return;
+        }
+    }
+
+    // 2. Length restriction block (Don't let them type the 11th digit, etc)
+    const currentLen = e.target.value.length;
+    // Account for selected text that would be overwritten
+    const selectionLen = e.target.selectionEnd - e.target.selectionStart;
+    
+    if (max && (currentLen - selectionLen) >= max) {
+        e.preventDefault();
+        return;
+    }
+}
+
+// Intercept Pastes natively
+function handlePaste(e, rule, max) {
+    e.preventDefault();
+    
+    let pastedText = (e.clipboardData || window.clipboardData).getData('text');
+    
+    // Globally kill scripts
+    pastedText = pastedText.replace(/[<>]/g, '').replace(/script/gi, '');
+    
+    // Apply field specific stripping
+    if (rule && rule.stripRegex) {
+        pastedText = pastedText.replace(rule.stripRegex, '');
+    }
+    
+    // Insert cleaned text at cursor position
+    const target = e.target;
+    const start = target.selectionStart;
+    const end = target.selectionEnd;
+    
+    const currentVal = target.value;
+    let newVal = currentVal.substring(0, start) + pastedText + currentVal.substring(end);
+    
+    // Prevent double spaces universally on paste
+    newVal = newVal.replace(/\s\s+/g, ' ');
+    
+    // Apply length caps
+    if (max && newVal.length > max) {
+        newVal = newVal.substring(0, max);
+    }
+    
+    target.value = newVal;
+    validateAndHighlight(target);
+    
+    // Move cursor to end of pasted text
+    const newPos = start + pastedText.length;
+    target.setSelectionRange(newPos, newPos);
+}
+
+// Fallback for drag-and-drop or mobile predictive keyboards
+function handleInput(e, rule, max) {
+    let val = e.target.value;
+    const target = e.target;
+    
+    // Globally kill scripts
+    if (val.toLowerCase().includes("<") || val.toLowerCase().includes(">") || val.toLowerCase().includes("script")) {
+        val = val.replace(/[<>]/g, '').replace(/script/gi, '');
+    }
+
+    if (rule && rule.stripRegex) {
+        val = val.replace(rule.stripRegex, '');
+    }
+    
+    if (val.includes("  ")) {
+        val = val.replace(/\s\s+/g, ' ');
+    }
+    
+    if (max && val.length > max) {
+        val = val.substring(0, max);
+    }
+
+    if (target.value !== val) {
+        target.value = val;
+    }
+    
+    validateAndHighlight(target);
+}
+
+
 function attachRestrictions(input) {
     if (input.dataset.restricted === "true") return;
     input.dataset.restricted = "true";
     
-    // Store previous valid value to revert to if needed
-    let prevValue = input.value;
+    const rule = getRule(input);
+    const max = rule && rule.max ? rule.max : (input.getAttribute('maxlength') ? parseInt(input.getAttribute('maxlength')) : null);
     
-    input.addEventListener("input", function(e) {
-        const rule = getRule(input);
-        let val = input.value;
-        
-        // Anti-HTML/Script globally
-        if (val.toLowerCase().includes("<") || val.toLowerCase().includes(">") || val.toLowerCase().includes("script")) {
-            input.value = prevValue;
-            validateAndHighlight(input);
-            return;
-        }
-
-        // Active character restriction
-        if (rule && rule.allowed && !rule.allowed.test(val)) {
-            input.value = prevValue; // Revert to valid
-            validateAndHighlight(input);
-            return;
-        }
-        
-        // Active length restriction
-        if (rule && rule.max && val.length > rule.max) {
-            input.value = prevValue; // Revert
-            validateAndHighlight(input);
-            return;
-        }
-        
-        // Restrict double spaces globally
-        if (val.includes("  ")) {
-            input.value = val.replace(/\s\s+/g, ' ');
-        }
-        
-        // Passed restrictions
-        prevValue = input.value;
-        validateAndHighlight(input);
+    input.addEventListener("keydown", (e) => handleKeydown(e, rule, max));
+    input.addEventListener("paste", (e) => handlePaste(e, rule, max));
+    input.addEventListener("input", (e) => handleInput(e, rule, max));
+    input.addEventListener("drop", (e) => {
+        e.preventDefault(); // Prevent dragging and dropping text completely for extreme strictness
     });
 
     input.addEventListener("blur", function() {
-        input.value = input.value.trim();
-        prevValue = input.value;
-        validateAndHighlight(input);
+        if(input.value) {
+            input.value = input.value.trim();
+            validateAndHighlight(input);
+        }
     });
 }
 

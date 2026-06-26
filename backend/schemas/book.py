@@ -8,7 +8,7 @@ class BookBase(BaseModel):
     author: str = Field(..., min_length=3, max_length=100, pattern=r"^[A-Za-z \.']+$")
     isbn: Optional[str] = Field(None, pattern=r"^[\d\-]+$")
     genre: str = Field(..., min_length=2)
-    publisher: Optional[str] = Field(None, pattern=r"^[A-Za-z0-9 &*\.,\-]+$")
+    publisher: Optional[str] = Field(None, pattern=r"^[A-Za-z0-9 &*\.,]+$")
     year: Optional[int] = None
     copies: int = Field(1, ge=1, le=1000)
     shelf_location: Optional[str] = Field(None, pattern=r"^[A-Z0-9\-]+$")
