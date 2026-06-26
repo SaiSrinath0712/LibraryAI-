@@ -299,8 +299,18 @@ function validateAndHighlight(input) {
         errorSpan.style.color = '#dc3545';
     } else {
         input.style.borderColor = val.length > 0 ? '#198754' : '';
-        errorSpan.textContent = val.length > 0 ? '✅ Looks good' : '';
-        errorSpan.style.color = '#198754';
+        if (val.length > 0) {
+            errorSpan.textContent = '✅ Looks good';
+            errorSpan.style.color = '#198754';
+        } else {
+            const rule = getRule(input);
+            if (rule && rule.msg) {
+                errorSpan.textContent = `ℹ️ ${rule.msg}`;
+                errorSpan.style.color = '#8ea1b5'; // subtle gray/blue
+            } else {
+                errorSpan.textContent = '';
+            }
+        }
     }
     
     checkContainerValidity(input.closest('form, .gate-form, .modal, #s-reg, #s-login'));
