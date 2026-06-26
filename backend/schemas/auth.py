@@ -14,7 +14,19 @@ class RegisterRequest(BaseModel):
     phone: str = Field(..., pattern=r"^[6-9]\d{9}$")
     department: Optional[str] = None
     year: Optional[str] = None
-    password: str = Field(..., min_length=8, max_length=50, pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
+    password: str = Field(..., min_length=8, max_length=50)
+
+    @field_validator("password")
+    def validate_password_complexity(cls, v):
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[@$!%*?&]", v):
+            raise ValueError("Password must contain at least one special character (@$!%*?&)")
+        return v
 
     @field_validator("name")
     def clean_name(cls, v):
@@ -26,4 +38,16 @@ class ChangePasswordRequest(BaseModel):
     username: Optional[str] = None
     member_id: Optional[str] = None
     current_password: str
-    new_password: str = Field(..., min_length=8, max_length=50, pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
+    new_password: str = Field(..., min_length=8, max_length=50)
+
+    @field_validator("new_password")
+    def validate_password_complexity(cls, v):
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"\d", v):
+            raise ValueError("Password must contain at least one number")
+        if not re.search(r"[@$!%*?&]", v):
+            raise ValueError("Password must contain at least one special character (@$!%*?&)")
+        return v
