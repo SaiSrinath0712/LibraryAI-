@@ -17,7 +17,17 @@ class BookBase(BaseModel):
     description: Optional[str] = Field(None, max_length=500)
     tags: Optional[str] = Field(None, pattern=r"^[A-Za-z0-9, ]*$")
 
+    @model_validator(mode="before")
+    @classmethod
+    def empty_str_to_none(cls, data: dict):
+        if isinstance(data, dict):
+            for k, v in data.items():
+                if v == "":
+                    data[k] = None
+        return data
+
     @field_validator("title", "description", "tags")
+    @classmethod
     def sanitize_html(cls, v):
         if v:
             if "<script>" in v.lower() or "javascript:" in v.lower() or "drop table" in v.lower():
