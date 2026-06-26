@@ -303,45 +303,56 @@ function validateAndHighlight(input) {
         errorSpan.style.color = '#198754';
     }
     
-    checkFormValidity(input.closest('form'));
+    checkContainerValidity(input.closest('form, .gate-form, .modal, #s-reg, #s-login'));
     return isValid;
 }
 
-function checkFormValidity(form) {
-    if (!form) return;
-    const submitBtn = form.querySelector('button[type="submit"]');
-    if (!submitBtn) return;
+function checkContainerValidity(container) {
+    if (!container) return;
+    
+    // Find all buttons in the container that trigger submissions (Login, Register, Save, etc.)
+    // We target primary buttons by looking for 'submit', or specific classes like 'g-sub', 'btn-p', etc.
+    const submitBtns = container.querySelectorAll('button[type="submit"], button.g-sub, button.btn-p, button[onclick*="Login"], button[onclick*="Register"], button[onclick*="save"], button[onclick*="Save"]');
+    
+    if (!submitBtns || submitBtns.length === 0) return;
     
     let allValid = true;
-    const inputs = form.querySelectorAll('input, select, textarea');
+    const inputs = container.querySelectorAll('input:not([type="hidden"]), select, textarea');
     inputs.forEach(input => {
-        if (input.hasAttribute('readonly') || input.hasAttribute('disabled') || input.type === 'hidden') return;
+        if (input.hasAttribute('readonly') || input.hasAttribute('disabled')) return;
         if (input.required && input.value.trim() === "") allValid = false;
-        if (input.style.borderColor === 'rgb(220, 53, 69)') allValid = false;
+        if (input.style.borderColor === 'rgb(220, 53, 69)') allValid = false; // #dc3545
     });
     
-    submitBtn.disabled = !allValid;
-    submitBtn.style.opacity = allValid ? '1' : '0.5';
-    submitBtn.style.cursor = allValid ? 'pointer' : 'not-allowed';
+    submitBtns.forEach(btn => {
+        // Prevent click if invalid
+        btn.disabled = !allValid;
+        btn.style.opacity = allValid ? '1' : '0.5';
+        btn.style.cursor = allValid ? 'pointer' : 'not-allowed';
+    });
 }
 
 function initValidation() {
+    // 1. Attach restrictions and listeners to ALL inputs globally
+    const inputs = document.querySelectorAll('input:not([type="hidden"]), select, textarea');
+    inputs.forEach(input => {
+        attachRestrictions(input);
+        validateAndHighlight(input);
+    });
+    
+    // 2. Initial container validity check
+    const containers = document.querySelectorAll('form, .gate-form, .modal, #s-reg, #s-login, #al-login');
+    containers.forEach(container => checkContainerValidity(container));
+    
+    // 3. Optional: Intercept form submits natively if they exist
     document.querySelectorAll('form').forEach(form => {
-        const inputs = form.querySelectorAll('input, select, textarea');
-        inputs.forEach(input => {
-            if (input.type === "hidden") return;
-            attachRestrictions(input);
-            validateAndHighlight(input);
-        });
-        
-        checkFormValidity(form);
-        
         form.addEventListener('submit', (e) => {
             let formValid = true;
             let firstInvalid = null;
             
-            inputs.forEach(input => {
-                if (input.type === "hidden" || input.hasAttribute('readonly') || input.hasAttribute('disabled')) return;
+            const formInputs = form.querySelectorAll('input:not([type="hidden"]), select, textarea');
+            formInputs.forEach(input => {
+                if (input.hasAttribute('readonly') || input.hasAttribute('disabled')) return;
                 const isValid = validateAndHighlight(input);
                 if (!isValid) {
                     formValid = false;
