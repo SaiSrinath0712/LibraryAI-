@@ -1,5 +1,5 @@
 import re
-from pydantic import BaseModel, Field, field_validator, EmailStr
+from pydantic import BaseModel, Field, field_validator
 from typing import Optional
 
 class LoginRequest(BaseModel):
@@ -10,7 +10,7 @@ class LoginRequest(BaseModel):
 class RegisterRequest(BaseModel):
     name: str = Field(..., min_length=3, max_length=50, pattern=r"^[A-Za-z ]+$")
     member_id: str = Field(..., pattern=r"^STU-\d{3}$")
-    email: EmailStr
+    email: str = Field(..., pattern=r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
     phone: str = Field(..., pattern=r"^[6-9]\d{9}$")
     department: Optional[str] = None
     year: Optional[str] = None
