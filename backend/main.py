@@ -7,11 +7,24 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-from database.db import engine, Base
+from database.db import engine, Base, SessionLocal
+from models.book import Book
 import models
+from seed import seed_db
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
+
+# Auto-seed the database if it's empty (specifically for SQLite on Render)
+db = SessionLocal()
+try:
+    if db.query(Book).count() == 0:
+        print("Database is empty. Auto-seeding...")
+        seed_db()
+except Exception as e:
+    print(f"Error during auto-seed: {e}")
+finally:
+    db.close()
 
 # Import routers
 from routes import auth, books, requests, loans, members, analytics, reports, notifications, chatbot, settings
