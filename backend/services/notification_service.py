@@ -1,14 +1,9 @@
-from database.db import get_next_sequence_value
-from datetime import datetime
+from sqlalchemy.orm import Session
+from models.notification import Notification
 
-def create_notification(db, user_id: int, message: str) -> dict:
-    new_id = get_next_sequence_value("notificationid")
-    notif = {
-        "id": new_id,
-        "user_id": user_id,
-        "message": message,
-        "is_read": False,
-        "created_at": datetime.utcnow()
-    }
-    db.notifications.insert_one(notif)
+def create_notification(db: Session, user_id: int, message: str) -> Notification:
+    notif = Notification(user_id=user_id, message=message, is_read=False)
+    db.add(notif)
+    db.commit()
+    db.refresh(notif)
     return notif

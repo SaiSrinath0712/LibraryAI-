@@ -1,6 +1,8 @@
 from datetime import datetime
+from sqlalchemy.orm import Session
+from models.settings import Settings
 
-def calculate_fine(due_date_str: str, return_date_str: str = None, db = None) -> float:
+def calculate_fine(due_date_str: str, return_date_str: str = None, db: Session = None) -> float:
     end_date_str = return_date_str or datetime.utcnow().strftime("%Y-%m-%d")
     
     try:
@@ -16,8 +18,8 @@ def calculate_fine(due_date_str: str, return_date_str: str = None, db = None) ->
     
     fine_per_day = 2.0
     if db:
-        settings = db.settings.find_one({"_id": "global"})
+        settings = db.query(Settings).first()
         if settings:
-            fine_per_day = settings.get("fine_per_day", 2.0)
+            fine_per_day = settings.fine_per_day
 
     return float(days_overdue * fine_per_day)

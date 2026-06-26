@@ -1,5 +1,11 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy import func
+from sqlalchemy.orm import Session
 from database.db import get_db
+from models.book import Book
+from models.user import User
+from models.loan import Loan
+from models.request import BorrowRequest
 from typing import Dict, List, Optional
 from datetime import datetime
 
@@ -7,56 +13,48 @@ router = APIRouter(tags=["Analytics"])
 
 @router.get("/dashboard")
 @router.get("/analytics/dashboard")
-def get_dashboard(db = Depends(get_db)):
-    total_books = db.books.count_documents({})
+def get_dashboard(db: Session = Depends(get_db)):
+    total_books = db.query(Book).count()
+    available_books = db.query(func.sum(Book.available_copies)).scalar() or 0
+    total_members = db.query(User).filter(User.role == "student").count()
+    active_loans = db.query(Loan).filter(Loan.status == "active").count()
+    overdue_loans = db.query(Loan).filter(Loan.status == "overdue").count()
+    pending_reqs = db.query(BorrowRequest).filter(BorrowRequest.status == "pending").count()
+    total_requests = db.query(BorrowRequest).count()
     
-    pipeline = [{"$group": {"_id": None, "total": {"$sum": "$available_copies"}}}]
-    res = list(db.books.aggregate(pipeline))
-    available_books = res[0]["total"] if res else 0
+    genre_query = db.query(Book.genre, func.count(Book.id)).group_by(Book.genre).all()
+    genre_dist = [{"genre": g[0], "cnt": g[1]} for g in genre_query]
     
-    total_members = db.users.count_documents({"role": "student"})
-    active_loans = db.loans.count_documents({"status": "active"})
-    overdue_loans = db.loans.count_documents({"status": "overdue"})
-    pending_reqs = db.borrow_requests.count_documents({"status": "pending"})
-    total_requests = db.borrow_requests.count_documents({})
-    
-    genre_pipeline = [{"$group": {"_id": "$genre", "cnt": {"$sum": 1}}}]
-    genre_query = list(db.books.aggregate(genre_pipeline))
-    genre_dist = [{"genre": g["_id"], "cnt": g["cnt"]} for g in genre_query if g["_id"]]
-    
-    top_books_query = list(db.books.find({}).sort("rating", -1).limit(8))
+    top_books_query = db.query(Book).order_by(Book.rating.desc()).limit(8).all()
     top_books = []
     for b in top_books_query:
-        actual_borrows = db.loans.count_documents({"book_id": b["id"]})
+        actual_borrows = db.query(Loan).filter(Loan.book_id == b.id).count()
         top_books.append({
-            "title": b.get("title"),
-            "author": b.get("author"),
+            "title": b.title,
+            "author": b.author,
             "borrow_count": actual_borrows
         })
     top_books.sort(key=lambda x: x["borrow_count"], reverse=True)
     
-    overdue_query = list(db.loans.find({"status": "overdue"}).sort("due_date", 1).limit(10))
+    overdue_query = db.query(Loan).filter(Loan.status == "overdue").order_by(Loan.due_date.asc()).limit(10).all()
     overdue_list = []
     for l in overdue_query:
-        book = db.books.find_one({"id": l["book_id"]})
-        user = db.users.find_one({"id": l["user_id"]})
         overdue_list.append({
-            "id": l["id"],
-            "book_title": book.get("title") if book else "Unknown Book",
-            "student_name": user.get("name") if user else "Unknown Student",
-            "due_date": l.get("due_date")
+            "id": l.id,
+            "book_title": l.book.title if l.book else "Unknown Book",
+            "student_name": l.user.name if l.user else "Unknown Student",
+            "due_date": l.due_date
         })
         
-    recent_query = list(db.loans.find({}).sort("id", -1).limit(8))
+    recent_query = db.query(Loan).order_by(Loan.id.desc()).limit(8).all()
     recent_loans = []
     for l in recent_query:
-        book = db.books.find_one({"id": l["book_id"]})
         recent_loans.append({
-            "id": l["id"],
-            "book_title": book.get("title") if book else "Unknown Book",
-            "issue_date": l.get("issue_date"),
-            "due_date": l.get("due_date"),
-            "status": l.get("status")
+            "id": l.id,
+            "book_title": l.book.title if l.book else "Unknown Book",
+            "issue_date": l.issue_date,
+            "due_date": l.due_date,
+            "status": l.status
         })
         
     return {
@@ -74,24 +72,20 @@ def get_dashboard(db = Depends(get_db)):
     }
 
 @router.get("/analytics")
-def get_analytics(db = Depends(get_db)):
-    genre_pipeline = [{"$group": {"_id": "$genre", "cnt": {"$sum": 1}}}]
-    genre_data = list(db.books.aggregate(genre_pipeline))
+def get_analytics(db: Session = Depends(get_db)):
+    genre_data = db.query(
+        Book.genre,
+        func.count(Book.id)
+    ).group_by(Book.genre).all()
     
     genre_demand = []
     for gd in genre_data:
-        genre = gd["_id"]
-        cnt = gd["cnt"]
-        if not genre:
-            continue
-            
-        books_in_genre = list(db.books.find({"genre": genre}, {"id": 1}))
-        book_ids = [b["id"] for b in books_in_genre]
-        total_borrows = db.loans.count_documents({"book_id": {"$in": book_ids}})
-        
+        genre = gd[0]
+        cnt = gd[1]
+        total = db.query(Loan).join(Book).filter(Book.genre == genre).count()
         genre_demand.append({
             "genre": genre,
-            "total": total_borrows,
+            "total": total,
             "cnt": cnt
         })
     genre_demand.sort(key=lambda x: x["total"], reverse=True)
@@ -103,7 +97,7 @@ def get_analytics(db = Depends(get_db)):
         base_loans = [45, 52, 60, 48, 70, 65, 80, 55, 72, 68, 85, 90]
         actual_loans_in_month = 0
         if i == current_month_index:
-            actual_loans_in_month = db.loans.count_documents({})
+            actual_loans_in_month = db.query(Loan).count()
         monthly.append({
             "month": month,
             "count": base_loans[i] + actual_loans_in_month
@@ -112,39 +106,32 @@ def get_analytics(db = Depends(get_db)):
     statuses = ["pending", "approved", "rejected"]
     req_status = []
     for s in statuses:
-        cnt = db.borrow_requests.count_documents({"status": s})
+        cnt = db.query(BorrowRequest).filter(BorrowRequest.status == s).count()
         req_status.append({"status": s, "cnt": cnt})
         
-    req_books_pipeline = [
-        {"$group": {"_id": "$book_id", "cnt": {"$sum": 1}}},
-        {"$sort": {"cnt": -1}},
-        {"$limit": 8}
-    ]
-    req_books_query = list(db.borrow_requests.aggregate(req_books_pipeline))
+    req_books_query = db.query(
+        BorrowRequest.book_id,
+        func.count(BorrowRequest.id)
+    ).group_by(BorrowRequest.book_id).order_by(func.count(BorrowRequest.id).desc()).limit(8).all()
     
     top_requested = []
     for rb in req_books_query:
-        book_id = rb["_id"]
-        cnt = rb["cnt"]
-        book = db.books.find_one({"id": book_id})
+        book_id = rb[0]
+        cnt = rb[1]
+        book = db.query(Book).filter(Book.id == book_id).first()
         if book:
             top_requested.append({
                 "book_id": book_id,
-                "title": book.get("title"),
+                "title": book.title,
                 "cnt": cnt
             })
             
-    fine_pipeline = [
-        {"$match": {"status": "returned"}},
-        {"$group": {"_id": None, "total": {"$sum": "$fine_amount"}}}
-    ]
-    fine_res = list(db.loans.aggregate(fine_pipeline))
-    fine_collected = fine_res[0]["total"] if fine_res else 0.0
+    fine_collected = db.query(func.sum(Loan.fine_amount)).filter(Loan.status == "returned").scalar() or 0.0
     
-    returns_on_time = db.loans.count_documents({
-        "status": "returned",
-        "$expr": {"$lte": ["$return_date", "$due_date"]}
-    })
+    returns_on_time = db.query(Loan).filter(
+        Loan.status == "returned",
+        Loan.return_date <= Loan.due_date
+    ).count()
     
     return {
         "genre_demand": genre_demand,
@@ -156,12 +143,11 @@ def get_analytics(db = Depends(get_db)):
     }
 
 @router.get("/analytics/top-books")
-def get_analytics_top_books(db = Depends(get_db)):
-    top_books = list(db.books.find({}, {"_id": 0}).sort("rating", -1).limit(10))
+def get_analytics_top_books(db: Session = Depends(get_db)):
+    top_books = db.query(Book).order_by(Book.rating.desc()).limit(10).all()
     return top_books
 
 @router.get("/analytics/genre-distribution")
-def get_analytics_genre_distribution(db = Depends(get_db)):
-    genre_pipeline = [{"$group": {"_id": "$genre", "cnt": {"$sum": 1}}}]
-    genre_query = list(db.books.aggregate(genre_pipeline))
-    return [{"genre": g["_id"], "count": g["cnt"]} for g in genre_query if g["_id"]]
+def get_analytics_genre_distribution(db: Session = Depends(get_db)):
+    genre_query = db.query(Book.genre, func.count(Book.id)).group_by(Book.genre).all()
+    return [{"genre": g[0], "count": g[1]} for g in genre_query]

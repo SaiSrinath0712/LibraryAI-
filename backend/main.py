@@ -7,7 +7,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 
-# Initialize MongoDB (handled in database/db.py)
+from database.db import engine, Base
+import models
+
+# Create database tables
+Base.metadata.create_all(bind=engine)
 
 # Import routers
 from routes import auth, books, requests, loans, members, analytics, reports, notifications, chatbot, settings

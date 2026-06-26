@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
 from database.db import get_db
+from models.settings import Settings
 from pydantic import BaseModel
 from utils.auth_helper import get_admin_user
 from typing import Optional
@@ -14,45 +16,44 @@ class SettingsUpdateSchema(BaseModel):
     max_renewals: Optional[int] = None
 
 @router.get("/settings")
-def get_settings(db = Depends(get_db)):
-    settings = db.settings.find_one({"_id": "global"})
+def get_settings(db: Session = Depends(get_db)):
+    settings = db.query(Settings).first()
     if not settings:
-        settings = {
-            "_id": "global",
-            "loan_period_days": 14,
-            "max_books": 3,
-            "fine_per_day": 2.0,
-            "max_renewals": 2
-        }
-        db.settings.insert_one(settings)
+        settings = Settings(
+            loan_period_days=14,
+            max_books=3,
+            fine_per_day=2.0,
+            max_renewals=2
+        )
+        db.add(settings)
+        db.commit()
+        db.refresh(settings)
         
     return {
-        "id": 1,
-        "loan_period_days": settings.get("loan_period_days", 14),
-        "loan_days": settings.get("loan_period_days", 14),
-        "max_books": settings.get("max_books", 3),
-        "fine_per_day": settings.get("fine_per_day", 2.0),
-        "max_renewals": settings.get("max_renewals", 2)
+        "id": settings.id,
+        "loan_period_days": settings.loan_period_days,
+        "loan_days": settings.loan_period_days,
+        "max_books": settings.max_books,
+        "fine_per_day": settings.fine_per_day,
+        "max_renewals": settings.max_renewals
     }
 
 @router.post("/settings")
-def update_settings(req: SettingsUpdateSchema, db = Depends(get_db), current_user=Depends(get_admin_user)):
-    settings = db.settings.find_one({"_id": "global"})
+def update_settings(req: SettingsUpdateSchema, db: Session = Depends(get_db), current_user=Depends(get_admin_user)):
+    settings = db.query(Settings).first()
     if not settings:
-        db.settings.insert_one({"_id": "global"})
+        settings = Settings()
+        db.add(settings)
         
-    update_data = {}
     loan_days = req.loan_days if req.loan_days is not None else req.loan_period_days
     if loan_days is not None:
-        update_data["loan_period_days"] = loan_days
+        settings.loan_period_days = loan_days
     if req.max_books is not None:
-        update_data["max_books"] = req.max_books
+        settings.max_books = req.max_books
     if req.fine_per_day is not None:
-        update_data["fine_per_day"] = req.fine_per_day
+        settings.fine_per_day = req.fine_per_day
     if req.max_renewals is not None:
-        update_data["max_renewals"] = req.max_renewals
+        settings.max_renewals = req.max_renewals
         
-    if update_data:
-        db.settings.update_one({"_id": "global"}, {"$set": update_data})
-        
+    db.commit()
     return {"ok": True}
