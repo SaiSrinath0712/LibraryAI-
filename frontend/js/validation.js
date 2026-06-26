@@ -4,99 +4,129 @@
 
 const FieldRules = {
     name: {
-        allowedCharRegex: /^[A-Za-z ]$/, // For keydown checking
-        stripRegex: /[^A-Za-z ]/g,       // For paste stripping
-        regex: /^[A-Za-z ]+$/,           // Full string validation
+        allowedCharRegex: /^[A-Za-z ]$/, 
+        stripRegex: /[^A-Za-z ]/g,       
+        regex: /^[A-Za-z ]+$/,           
         min: 3, max: 50,
-        msg: "Only alphabets and spaces allowed (3-50 chars)."
+        hint: "Enter your full name using only alphabets and spaces (3-50 characters).",
+        err: "Name can contain only alphabets and spaces.",
+        success: "Name looks good."
     },
     memberId: {
         allowedCharRegex: /^[STU0-9\-]$/i,
         stripRegex: /[^STU0-9\-]/gi,
         regex: /^STU-\d{3}$/,
-        msg: "Format: STU-XXX"
+        hint: "Format: STU-001",
+        err: "Member ID must follow the format STU-001.",
+        success: "Valid Member ID."
     },
     email: {
         allowedCharRegex: /^[^\s]$/,
         stripRegex: /\s/g,
         regex: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-        msg: "Valid email required."
+        hint: "Enter a valid email address (example: user@example.com).",
+        err: "Please enter a valid email address.",
+        success: "Email looks good."
     },
     phone: {
         allowedCharRegex: /^[0-9]$/,
         stripRegex: /[^0-9]/g,
         regex: /^[6-9]\d{9}$/,
         max: 10,
-        msg: "Exactly 10 digits starting with 6,7,8,9."
+        hint: "Enter a 10-digit mobile number starting with 6, 7, 8, or 9.",
+        err: "Mobile number must contain exactly 10 digits.",
+        success: "Valid mobile number."
     },
     password: {
-        allowedCharRegex: /./, // Any char
+        allowedCharRegex: /./,
         stripRegex: null,
         regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,50}$/,
-        msg: "Min 8 chars, 1 uppercase, 1 lowercase, 1 number, 1 special char."
+        hint: "Password must be at least 8 characters and include one uppercase letter, one lowercase letter, one number, and one special character.",
+        err: "Password does not meet the required criteria.",
+        success: "Strong password."
     },
     bookTitle: {
         allowedCharRegex: /^[A-Za-z0-9 \-':,\.]$/,
         stripRegex: /[^A-Za-z0-9 \-':,\.]/g,
         regex: /^[A-Za-z0-9 \-':,\.]+$/,
         min: 3, max: 100,
-        msg: "Min 3 chars. Only standard punctuation allowed."
+        hint: "Enter a book title (3-100 characters). Letters, numbers, spaces, hyphen (-), apostrophe ('), comma (,), colon (:), and period (.) are allowed.",
+        err: "Book title contains invalid characters.",
+        success: "Book title looks good."
     },
     author: {
         allowedCharRegex: /^[A-Za-z \.']$/,
         stripRegex: /[^A-Za-z \.']/g,
         regex: /^[A-Za-z \.']+$/,
         min: 3, max: 100,
-        msg: "Only alphabets, spaces, periods, apostrophes."
+        hint: "Enter the author's name using only alphabets, spaces, periods (.), and apostrophes (').",
+        err: "Author name can contain only alphabets, spaces, periods, and apostrophes.",
+        success: "Author name looks good."
     },
     publisher: {
         allowedCharRegex: /^[A-Za-z0-9 &*\.,]$/,
         stripRegex: /[^A-Za-z0-9 &*\.,]/g,
         regex: /^[A-Za-z0-9 &*\.,]+$/,
-        msg: "Alphabets, numbers, and & * . ,"
+        hint: "Letters, numbers, spaces, &, -, ., and commas are allowed.",
+        err: "Publisher name contains invalid characters.",
+        success: "Publisher looks good."
     },
     isbn: {
         allowedCharRegex: /^[\d\-]$/,
         stripRegex: /[^\d\-]/g,
         regex: /^(\d{10}|\d{13}|\d+-\d+-\d+-\d+-\d+)$/,
-        msg: "Digits and hyphens only."
+        hint: "Enter a valid ISBN-10 or ISBN-13 (digits and hyphens only).",
+        err: "Invalid ISBN format.",
+        success: "Valid ISBN."
     },
     shelf: {
         allowedCharRegex: /^[A-Z0-9\-]$/i,
         stripRegex: /[^A-Z0-9\-]/gi,
         regex: /^[A-Z0-9\-]+$/,
-        msg: "A-Z, 0-9, and hyphen."
+        hint: "Example: A1, B12, C-10.",
+        err: "Invalid shelf location.",
+        success: "Valid shelf location."
     },
     tags: {
         allowedCharRegex: /^[A-Za-z0-9, ]$/,
         stripRegex: /[^A-Za-z0-9, ]/g,
         regex: /^[A-Za-z0-9, ]+$/,
-        msg: "Letters, numbers, comma, space."
+        hint: "Comma separated tags (e.g. ai, python, ml)",
+        err: "Letters, numbers, commas, and spaces only.",
+        success: "Tags look good."
     },
     year: {
         allowedCharRegex: /^[0-9]$/,
         stripRegex: /[^0-9]/g,
         regex: /^[0-9]{4}$/,
         max: 4,
-        msg: "Exactly 4 digits."
+        hint: "Enter a year between 1900 and the current year.",
+        err: "Please enter a valid publication year.",
+        success: "Valid year."
     },
     copies: {
         allowedCharRegex: /^[0-9]$/,
         stripRegex: /[^0-9]/g,
         regex: /^[1-9][0-9]*$/,
-        msg: "Positive integer only."
+        hint: "Enter the number of copies available (1-1000).",
+        err: "Copies must be a positive whole number.",
+        success: "Valid number of copies."
     },
     rating: {
         allowedCharRegex: /^[0-9\.]$/,
         stripRegex: /[^0-9\.]/g,
         regex: /^[1-5](\.[0-9])?$/,
-        msg: "1.0 to 5.0"
+        hint: "Enter a rating between 1 and 5.",
+        err: "Rating must be between 1.0 and 5.0.",
+        success: "Valid rating."
     },
     description: {
         allowedCharRegex: /./, 
         stripRegex: /[<>]/g, 
         regex: /^[^<>]*$/,
-        msg: "HTML/Script tags not allowed."
+        hint: "Maximum 500 characters. HTML, JavaScript, and SQL code are not allowed.",
+        err: "Description contains invalid content.",
+        success: "Description looks good."
     }
 };
 
@@ -247,15 +277,15 @@ function attachRestrictions(input) {
 
 function validateAndHighlight(input) {
     let isValid = true;
-    let errorMsg = "";
     const val = input.value;
     
+    const rule = getRule(input);
+    let errorMsg = rule ? rule.err : "Invalid input";
+
     if (input.required && val.length === 0) {
         isValid = false;
         errorMsg = "Required field.";
     } else if (val.length > 0) {
-        const rule = getRule(input);
-        
         if (input.id && input.id.toLowerCase().includes("confirm")) {
             const form = input.closest('form');
             if (form) {
@@ -268,10 +298,8 @@ function validateAndHighlight(input) {
         } else if (rule) {
             if (rule.regex && !rule.regex.test(val)) {
                 isValid = false;
-                errorMsg = rule.msg;
             } else if (rule.min && val.length < rule.min) {
                 isValid = false;
-                errorMsg = rule.msg;
             }
         }
         
@@ -300,16 +328,21 @@ function validateAndHighlight(input) {
     } else {
         input.style.borderColor = val.length > 0 ? '#198754' : '';
         if (val.length > 0) {
-            errorSpan.textContent = '✅ Looks good';
+            if (input.id && input.id.toLowerCase().includes("confirm")) {
+                errorSpan.textContent = '✅ Passwords match.';
+            } else {
+                errorSpan.textContent = rule ? `✅ ${rule.success}` : '✅ Looks good';
+            }
             errorSpan.style.color = '#198754';
         } else {
-            const rule = getRule(input);
-            if (rule && rule.msg) {
-                errorSpan.textContent = `ℹ️ ${rule.msg}`;
-                errorSpan.style.color = '#8ea1b5'; // subtle gray/blue
+            if (input.id && input.id.toLowerCase().includes("confirm")) {
+                errorSpan.textContent = `ℹ️ Re-enter your password exactly as above.`;
+            } else if (rule && rule.hint) {
+                errorSpan.textContent = `ℹ️ ${rule.hint}`;
             } else {
                 errorSpan.textContent = '';
             }
+            errorSpan.style.color = '#8ea1b5'; // subtle gray/blue
         }
     }
     
