@@ -8,12 +8,14 @@ from typing import Optional
 
 router = APIRouter(tags=["Settings"])
 
+from pydantic import BaseModel, Field
+
 class SettingsUpdateSchema(BaseModel):
-    loan_days: Optional[int] = None
-    loan_period_days: Optional[int] = None
-    max_books: Optional[int] = None
-    fine_per_day: Optional[float] = None
-    max_renewals: Optional[int] = None
+    loan_days: Optional[int] = Field(None, gt=0)
+    loan_period_days: Optional[int] = Field(None, gt=0)
+    max_books: Optional[int] = Field(None, gt=0)
+    fine_per_day: Optional[float] = Field(None, ge=0.0)
+    max_renewals: Optional[int] = Field(None, ge=0)
 
 @router.get("/settings")
 def get_settings(db: Session = Depends(get_db)):

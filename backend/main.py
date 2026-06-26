@@ -2,7 +2,9 @@ import os
 import socket
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -30,6 +32,24 @@ finally:
 from routes import auth, books, requests, loans, members, analytics, reports, notifications, chatbot, settings
 
 app = FastAPI(title="LibraryAI Pro API", version="1.0.0")
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    errors = exc.errors()
+    first_error = errors[0] if errors else {}
+    field_name = first_error.get("loc", ["Unknown"])[-1]
+    error_msg = first_error.get("msg", "Invalid input")
+    
+    # Check if the error msg contains our custom message from pydantic (Value error, ...)
+    if "Value error, " in error_msg:
+        error_msg = error_msg.replace("Value error, ", "")
+    
+    friendly_message = f"Validation failed for '{field_name}': {error_msg}"
+    
+    return JSONResponse(
+        status_code=422,
+        content={"success": False, "message": friendly_message}
+    )
 
 # Setup CORS
 app.add_middleware(

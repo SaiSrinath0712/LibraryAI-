@@ -1,9 +1,9 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 class LoanIssueRequest(BaseModel):
-    book_id: int
-    member_id: str
+    book_id: int = Field(..., gt=0)
+    member_id: str = Field(..., pattern=r"^STU-\d{3}$")
     due_date: Optional[str] = None
 
 class LoanRenewReturnRequest(BaseModel):

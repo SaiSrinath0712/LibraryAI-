@@ -1,5 +1,5 @@
 import re
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator, EmailStr
 from typing import Optional
 
 class LoginRequest(BaseModel):
@@ -8,16 +8,22 @@ class LoginRequest(BaseModel):
     password: str
 
 class RegisterRequest(BaseModel):
-    name: str = Field(..., min_length=1)
-    member_id: str
-    email: Optional[str] = None
-    phone: Optional[str] = None
+    name: str = Field(..., min_length=3, max_length=50, pattern=r"^[A-Za-z ]+$")
+    member_id: str = Field(..., pattern=r"^STU-\d{3}$")
+    email: EmailStr
+    phone: str = Field(..., pattern=r"^[6-9]\d{9}$")
     department: Optional[str] = None
     year: Optional[str] = None
-    password: str = Field(..., min_length=6)
+    password: str = Field(..., min_length=8, max_length=50, pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
+
+    @field_validator("name")
+    def clean_name(cls, v):
+        v = v.strip()
+        v = re.sub(r'\s+', ' ', v)
+        return v
 
 class ChangePasswordRequest(BaseModel):
     username: Optional[str] = None
     member_id: Optional[str] = None
     current_password: str
-    new_password: str
+    new_password: str = Field(..., min_length=8, max_length=50, pattern=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&]).{8,}$")
