@@ -328,12 +328,8 @@ function validateAndHighlight(input) {
     } else {
         input.style.borderColor = val.length > 0 ? '#198754' : '';
         if (val.length > 0) {
-            if (input.id && input.id.toLowerCase().includes("confirm")) {
-                errorSpan.textContent = '✅ Passwords match.';
-            } else {
-                errorSpan.textContent = rule ? `✅ ${rule.success}` : '✅ Looks good';
-            }
-            errorSpan.style.color = '#198754';
+            errorSpan.textContent = '';
+            errorSpan.style.color = '';
         } else {
             if (input.id && input.id.toLowerCase().includes("confirm")) {
                 errorSpan.textContent = `ℹ️ Re-enter your password exactly as above.`;
