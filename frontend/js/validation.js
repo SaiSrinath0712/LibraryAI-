@@ -368,8 +368,9 @@ function checkContainerValidity(container) {
     });
     
     submitBtns.forEach(btn => {
-        // Prevent click if invalid
-        btn.disabled = !allValid;
+        // Store validity state in dataset instead of disabling, to allow click interception for popup
+        btn.dataset.allValid = allValid;
+        btn.disabled = false; // ensure it's not disabled
         btn.style.opacity = allValid ? '1' : '0.5';
         btn.style.cursor = allValid ? 'pointer' : 'not-allowed';
     });
@@ -411,6 +412,20 @@ function initValidation() {
         });
     });
 }
+
+// Intercept clicks on invalid buttons globally (capture phase)
+document.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[type="submit"], button.g-sub, button.btn-p, button[onclick*="Login"], button[onclick*="Register"], button[onclick*="save"], button[onclick*="Save"]');
+    if (btn && btn.dataset.allValid === 'false') {
+        e.preventDefault();
+        e.stopImmediatePropagation();
+        if (typeof notify === 'function') {
+            notify('Please provide valid details. Check the highlighted fields.', 'e');
+        } else {
+            alert('Please provide valid details. Check the highlighted fields.');
+        }
+    }
+}, true);
 
 document.addEventListener('DOMContentLoaded', initValidation);
 window.reinitValidation = initValidation;
