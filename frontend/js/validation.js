@@ -419,10 +419,23 @@ document.addEventListener('click', (e) => {
     if (btn && btn.dataset.allValid === 'false') {
         e.preventDefault();
         e.stopImmediatePropagation();
+        
+        let errorMsg = 'Please provide valid details. Check the highlighted fields.';
+        const container = btn.closest('form, .gate-form, .modal, #s-reg, #s-login, #al-login');
+        if (container) {
+            const errorSpans = container.querySelectorAll('.validation-error');
+            for (const span of errorSpans) {
+                if (span.textContent.includes('❌')) {
+                    errorMsg = span.textContent.replace('❌', '').trim();
+                    break;
+                }
+            }
+        }
+
         if (typeof notify === 'function') {
-            notify('Please provide valid details. Check the highlighted fields.', 'e');
+            notify(errorMsg, 'e');
         } else {
-            alert('Please provide valid details. Check the highlighted fields.');
+            alert(errorMsg);
         }
     }
 }, true);
