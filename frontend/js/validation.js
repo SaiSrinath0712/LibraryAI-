@@ -46,12 +46,12 @@ const FieldRules = {
         success: "Strong password."
     },
     bookTitle: {
-        allowedCharRegex: /^[A-Za-z0-9 \-':,\.]$/,
-        stripRegex: /[^A-Za-z0-9 \-':,\.]/g,
-        regex: /^[A-Za-z0-9 \-':,\.]+$/,
+        allowedCharRegex: /^[A-Za-z ]$/,
+        stripRegex: /[^A-Za-z ]/g,
+        regex: /^[A-Za-z ]+$/,
         min: 3, max: 100,
-        hint: "Enter a book title (3-100 characters). Letters, numbers, spaces, hyphen (-), apostrophe ('), comma (,), colon (:), and period (.) are allowed.",
-        err: "Book title contains invalid characters.",
+        hint: "Enter a book title (3-100 characters). Only alphabets and spaces are allowed.",
+        err: "Book title can contain only alphabets and spaces.",
         success: "Book title looks good."
     },
     author: {
