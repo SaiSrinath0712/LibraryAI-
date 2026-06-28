@@ -874,7 +874,7 @@ async function submitReq(){
     cm('m-req');
     notify('Request sent! Admin will review it shortly 📨','s');
     renderSHome();
-  }catch(e){ notify(e.message, 'e'); }
+  }catch(e){}
 }
 
 // ════════════════════════════════
@@ -972,13 +972,11 @@ function openReturn(lid, title, isOv, fine){
 }
 async function doReturn(){
   const lid=document.getElementById('ret-lid').value;
-  try {
-    const r=await post(`/loans/${lid}/return`,{});
-    cm('m-return');
-    if(r.fine>0) notify(`Book returned. Fine recorded: ₹${r.fine}. Please pay at counter.`,'i');
-    else notify('Book returned successfully! Thank you.','s');
-    switchLoanTab('active',null);
-  } catch(e) { notify(e.message, 'e'); }
+  const r=await post(`/loans/${lid}/return`,{});
+  cm('m-return');
+  if(r.fine>0) notify(`Book returned. Fine recorded: ₹${r.fine}. Please pay at counter.`,'i');
+  else notify('Book returned successfully! Thank you.','s');
+  switchLoanTab('active',null);
 }
 
 // ════════════════════════════════
@@ -1003,12 +1001,10 @@ function openRenew(lid, title, due, renewals){
 }
 async function doRenew(){
   const lid=document.getElementById('ren-lid').value;
-  try {
-    const r=await post(`/loans/${lid}/renew`,{});
-    cm('m-renew');
-    notify(`Loan renewed! New due date: ${fmt(r.new_due)}`,'s');
-    switchLoanTab('active',null);
-  } catch(e) { notify(e.message, 'e'); }
+  const r=await post(`/loans/${lid}/renew`,{});
+  cm('m-renew');
+  notify(`Loan renewed! New due date: ${fmt(r.new_due)}`,'s');
+  switchLoanTab('active',null);
 }
 
 function checkStudentNotifs(){
@@ -1247,12 +1243,10 @@ function openAdminReturn(lid,title,isOv,fine){
 }
 async function doAdminReturn(){
   const lid=document.getElementById('aret-lid').value;
-  try {
-    const r=await post(`/loans/${lid}/return`,{});
-    cm('m-aret');
-    notify(r.fine>0?`Returned. Fine: ₹${r.fine} collected`:'Book returned successfully!','s');
-    renderALoans();
-  } catch(e) { notify(e.message, 'e'); }
+  const r=await post(`/loans/${lid}/return`,{});
+  cm('m-aret');
+  notify(r.fine>0?`Returned. Fine: ₹${r.fine} collected`:'Book returned successfully!','s');
+  renderALoans();
 }
 
 // ════════════════════════════════
@@ -1318,20 +1312,16 @@ async function saveBook(){
   if(!title||!author||!genre){notify('Title, Author & Genre required','e');return;}
   const id=document.getElementById('b-id').value;
   const data={title,author,isbn:document.getElementById('b-isbn').value,genre,year:document.getElementById('b-year').value||null,publisher:document.getElementById('b-pub').value,copies:parseInt(document.getElementById('b-copies').value)||1,description:document.getElementById('b-desc').value,shelf:document.getElementById('b-shelf').value,rating:parseFloat(document.getElementById('b-rating').value)||4,tags:document.getElementById('b-tags').value};
-  try {
-    if(id) await put('/books/'+id,data);
-    else await post('/books',data);
-    notify(id?'Book updated!':'Book added!','s');
-    cm('m-book');renderABooks();
-  } catch(e) { notify(e.message, 'e'); }
+  if(id) await put('/books/'+id,data);
+  else await post('/books',data);
+  notify(id?'Book updated!':'Book added!','s');
+  cm('m-book');renderABooks();
 }
 
 async function delBook(id){
   if(!confirm('Delete this book permanently?'))return;
-  try {
-    await del('/books/'+id);
-    notify('Book deleted','i');renderABooks();
-  } catch(e) { notify(e.message, 'e'); }
+  await del('/books/'+id);
+  notify('Book deleted','i');renderABooks();
 }
 
 // ════════════════════════════════
@@ -1525,13 +1515,10 @@ async function changePwd(){
   const cf=document.getElementById('pwd-cnf').value;
   if(nw!==cf){notify('Passwords do not match','e');return;}
   if(nw.length<6){notify('Min 6 characters','e');return;}
-  try {
-    await post('/admin/change-password',{username:'admin',current_password:cur,new_password:nw});
-    notify('Password updated!','s');cm('m-pwd');
-  } catch(e) { notify(e.message, 'e'); }
+  await post('/admin/change-password',{username:'admin',current_password:cur,new_password:nw});
+  notify('Password updated!','s');cm('m-pwd');
 }
 </script>
 <script src="js/validation.js?v=5"></script>
 </body>
 </html>
-
