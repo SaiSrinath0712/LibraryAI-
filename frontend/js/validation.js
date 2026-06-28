@@ -364,7 +364,12 @@ function checkContainerValidity(container) {
     inputs.forEach(input => {
         if (input.hasAttribute('readonly') || input.hasAttribute('disabled')) return;
         if (input.required && input.value.trim() === "") allValid = false;
-        if (input.style.borderColor === 'rgb(220, 53, 69)') allValid = false; // #dc3545
+        
+        // Check if there is an error span showing an error
+        const errorSpan = input.nextElementSibling;
+        if (errorSpan && errorSpan.classList.contains('validation-error') && errorSpan.textContent.includes('❌')) {
+            allValid = false;
+        }
     });
     
     submitBtns.forEach(btn => {
