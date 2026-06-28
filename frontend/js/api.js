@@ -18,6 +18,7 @@ async function api(path, opts = {}) {
   }
 
   const response = await fetch(`${BASE_URL}${path}`, {
+    cache: 'no-store',
     ...opts,
     headers: { ...headers, ...(opts.headers || {}) },
   });

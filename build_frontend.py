@@ -15,7 +15,7 @@ if start == -1 or end == -1:
 
 content = content[:start] + content[end:]
 
-header = """<script src="js/api.js"></script>
+header = """<script src="js/api.js?v=2"></script>
 <script>
 'use strict';
 let ROLE=null, CU={};
