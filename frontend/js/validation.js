@@ -146,7 +146,7 @@ function getRule(input) {
     if (id.includes("isbn")) return FieldRules.isbn;
     if (id.includes("shelf")) return FieldRules.shelf;
     if (id.includes("tag")) return FieldRules.tags;
-    if (id.includes("year")) return FieldRules.year;
+    if (id === "b-year") return FieldRules.year;
     if (id.includes("copies") || id.includes("loan_period") || id.includes("max_books") || id.includes("fine")) return FieldRules.copies;
     if (id.includes("rating")) return FieldRules.rating;
     if (id.includes("note") || id.includes("description") || name.includes("note") || name.includes("description")) return FieldRules.description;
